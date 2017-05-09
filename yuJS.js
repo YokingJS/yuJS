@@ -1,6 +1,3 @@
-/**
- * Created by yoking on 2017/2/23.
- */
 (function (g,$,undefined) {
     //commonFun是一个全局方法库//实现了对当前项目的零耦合
     //jsonParse 一个全局parse方法
@@ -10,14 +7,16 @@
     //nextNode 取当前节点下一个节点
     //childIndex 当前元素是父元素的第几个元素
     //getDomCss 取节点某个属性
-    //JQShow 模拟JQ实现的一个下拉方法
-    //JQHide 模拟JQ实现的一个收缩方法
+    //show 使用css3 transition实现展开动作
+    //hide 使用css3 transition实现收缩动作
     //domReady 当前页面全部加载完执行参数中方法
     //appendChilds 给父元素添加多个子元素
     //ajax$ 实现对ajax的封装
     //getQueryString 获取当前url的后缀参数//调用方法不传参数则以数组形式取出所有后缀//调用参数为number类型（索引值）则根据索引取后缀/string则根据名称返回
     //setOpacity 设置元素透明度
-    //fadein//fadeout元素淡入淡出
+    //fadein元素淡入淡出
+    //fadeout元素淡入淡出
+    //rotate旋转元素
     //addClass 元素添加某个class
     //minusClass 元素减去某个class
     //scroll 元素添加滚动事件
@@ -88,23 +87,27 @@
             commonFun.show(elem,directionH,HSpeed);
         },
         show:function (elem,attObj,timingStyle) {
-            var opacityTime=0;
+            if(!elem)return;
+            var style=elem.style;
             var parentOH='';
             var parentOverflow='';
-            if (!timingStyle && elem) {
-                elem.style.display = 'block';
+            if (elem && !timingStyle ) {
+                style.display = 'block';
                 return;
             }
             if(!attObj)return;
-            if(attObj.opacity){
-                opacityTime=200;
-                if (elem.style.opacity != undefined) {
-                    elem.style.opacity = 0;
+            if(attObj.opacity!=undefined){
+                style.transition='' ;
+                style.webkitTransition='';
+                style.oTransition='';
+                style.mozTransition='';
+                if (style.opacity != undefined) {
+                    style.opacity = 0;
                 } else {
-                    elem.style.filter = "alpha(opacity=0)";
+                    style.filter = "alpha(opacity=0)";
                 }
             }
-            timingStyle=timingStyle||'ease-in-out';
+            timingStyle=timingStyle||'ease';
             var getHeight=function (ele) {
                     var  h = commonFun.getDomCss(ele,'height').replace('px','');
                     var getSonHTotal=function (father) {
@@ -120,13 +123,6 @@
                                     tempH=='auto'?'auto': parseFloat(tempH.replace('px','')));
                             if(thisChildH=='auto'||(!thisChildH && thisChildH!=0)){
                                 thisChildH=getCSS($this,'offsetHeight');
-                                // var newSon=getSonHTotal(childNodesList[i]);
-                                // if(newSon)thisChildH=newSon;
-                                // else{
-                                //     if(!thisChildH && thisChildH!=0)thisChildH=0;
-                                //     var minH=parseFloat(commonFun.getDomCss(childNodesList[i],'minHeight').replace('px',''));
-                                //     if(minH)thisChildH=minH;
-                                // }
                             }
                             height+=thisChildH;
                         }
@@ -137,89 +133,148 @@
                     }
                     return h;
                 };
-                //弃用JS动画改用transition动画
-                // if(HSpeed==='fast'||HSpeed==='normal'||HSpeed==='slow'){
-                //     HSpeed = HSpeed==='fast'?20:HSpeed==='normal'?10:5;
-                //     elem.style.overflow = 'hidden';
-                //     var oHeight=getHeight(elem);
-                //     var hAdd=HSpeed;
-                //     elem.style.height = 0+'px';
-                //     elem.style.display = 'block';
-                //     var process = function(height,width){
-                //         height = oHeight-height<hAdd?oHeight:hAdd+height;
-                //         if(height !== oHeight) {
-                //             elem.style.height = height+'px';
-                //             setTimeout(function(){process(height,width);},2);
-                //         }
-                //         else {
-                //             elem.style.height = 'auto';
-                //         }
-                //     };
-                //     process(0);
-                //     return;
-                // }
             var isNum=typeof(timingStyle)==='number';
             var isNumStr=parseInt(timingStyle)>0;
             if(elem.parentNode){
                 var $parent=elem.parentNode;
-                parentOH=$parent.style.height;
-                parentOverflow=commonFun.getDomCss($parent,'overflow');
-                $parent.style.height=$parent.offsetHeight+'px';
-                $parent.style.overflow = 'hidden';
-                elem.style.display='block';
+                var PS=$parent.style;
+                var POH=$parent.offsetHeight;
+                parentOH=attObj.height==='const'?POH+'px':PS.height;
+                parentOverflow=this.getDomCss($parent,'overflow');
+                PS.height=$parent.offsetHeight+'px';
+                PS.overflow = 'hidden';
+                style.display='block';
             }
             var oHeight;
-            var oPaddingT=commonFun.getDomCss(elem,'paddingTop');
-            var oPaddingB=commonFun.getDomCss(elem,'paddingBottom');
-            if(attObj.height){
-                elem.style.paddingTop='0';
-                elem.style.paddingBottom='0';
+            var oPaddingT=this.getDomCss(elem,'paddingTop');
+            var oPaddingB=this.getDomCss(elem,'paddingBottom');
+            var oMarginT=(function () {
+                elem=commonFun.deleteEmptyNode(elem);
+                var childList=elem.childNodes;
+                var total=0;
+                for(var i=0,l=childList.length;i<l;i++){
+                    total+=parseFloat(commonFun.getDomCss(childList[i],'marginTop')) ;
+                    //只取一个存在margin的子元素，之后存在margin如果计算，需要判断是否和当前在同一行，同一行的margin不因计算
+                    if(total>0)return total+'px';
+                }
+                return '0px';
+            })();
+            if(attObj.height!=undefined){
+                style.paddingTop='0';
+                style.paddingBottom='0';
                 oHeight=getHeight(elem);
-                elem.style.height = 0+'px';
+                style.height = 0+'px';
             }
             var duration=isNum?timingStyle+'ms':isNumStr?parseInt(timingStyle)+'ms':'300ms';
             var timing=(!isNum && !isNumStr && (timingStyle==='linear'||timingStyle.match('ease')))?timingStyle:'ease-in-out';
-            elem.style.transition='all '+duration +' '+timing ;
-            elem.style.webkitTransition='all '+duration +' '+timing;
-            elem.style.oTransition='all '+duration+' '+timing;
-            elem.style.mozTransition='all '+duration+' '+timing;
-            elem.style.overflow='hidden';
+            style.transition='all '+duration +' '+timing ;
+            style.webkitTransition='all '+duration +' '+timing;
+            style.oTransition='all '+duration+' '+timing;
+            style.mozTransition='all '+duration+' '+timing;
+            style.overflow='hidden';
             setTimeout(function () {
                 if(elem.parentNode){
-                    elem.parentNode.style.height=parentOH;
+                    elem.parentNode.style.height=parentOH||'auto';
                     elem.parentNode.style.overflow =parentOverflow|| 'visible';
                 }
-                elem.style.paddingTop=oPaddingT;
-                elem.style.paddingBottom=oPaddingB;
-                elem.style.height =oHeight+'px';
+                style.paddingTop=oPaddingT;
+                style.paddingBottom=oPaddingB;
+                style.height =parseFloat(oHeight)+parseFloat(oMarginT)+'px';
+                setTimeout(function () {
+                    style.height='auto';
+                },parseInt(duration)+50);
                 setTimeout(function () {
                     commonFun.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'100');
-                },parseInt(duration)/3);
-            },opacityTime);
+                },parseInt(duration)/6);
+            },-1);
         },
-        JQHide:function (elem,directionH,HSpeed,directionW,WSpeed) {
-            if (!WSpeed && !HSpeed) {
-                elem.style.display = 'none';
+        JQHide:function (elem,directionH,HSpeed) {
+            this.hide(elem,directionH,HSpeed);
+        },
+        // hideO:function (elem,directionH,HSpeed) {
+        //     if (elem && !HSpeed) {
+        //         elem.style.display = 'none';
+        //         return;
+        //     }
+        //     if(HSpeed){
+        //         HSpeed = HSpeed==='fast'?20:HSpeed==='normal'?10:5;
+        //         elem.style.overflow = 'hidden';
+        //     }
+        //     var  oHeight = this.getDomCss(elem,'height').replace('px','');
+        //     var hAdd=HSpeed;
+        //     var process = function(height,width){
+        //         height = height-hAdd>0?height-hAdd:0;
+        //         if(height !== 0) {
+        //             elem.style.height = height+'px';
+        //             setTimeout(function(){process(height,width);},2);
+        //         }
+        //         else {
+        //             elem.style.display='none';
+        //             elem.style.height = oHeight+'px';
+        //         }
+        //     };
+        //     process(oHeight.replace('px',''));
+        // },
+        hide:function (elem,attObj,timingStyle) {
+            if(!elem)return;
+            var style=elem.style;
+            var parentOH='';
+            var parentOverflow='';
+            if (elem && !timingStyle ) {
+                style.display = 'none';
                 return;
             }
-            if(HSpeed){
-                HSpeed = HSpeed==='fast'?20:HSpeed==='normal'?10:5;
-                elem.style.overflow = 'hidden';
+            if(!attObj)return;
+            if(attObj.opacity!=undefined){
+                style.transition='' ;
+                style.webkitTransition='';
+                style.oTransition='';
+                style.mozTransition='';
+                if (style.opacity != undefined) {
+                    style.opacity = 1;
+                } else {
+                    style.filter = "alpha(opacity=100)";
+                }
             }
-            var  oHeight = this.getDomCss(elem,'height').replace('px','');
-            var hAdd=HSpeed;
-            var process = function(height,width){
-                height = height-hAdd>0?height-hAdd:0;
-                if(height !== 0) {
-                    elem.style.height = height+'px';
-                    setTimeout(function(){process(height,width);},2);
-                }
-                else {
-                    elem.style.display='none';
-                    elem.style.height = oHeight+'px';
-                }
-            };
-            process(oHeight.replace('px',''));
+            timingStyle=timingStyle||'ease-in-out';
+            var isNum=typeof(timingStyle)==='number';
+            var isNumStr=parseInt(timingStyle)>0;
+            // if(elem.parentNode){
+            //     var $parent=elem.parentNode;
+            //     parentOH=$parent.style.height;
+            //     parentOverflow=commonFun.getDomCss($parent,'overflow');
+            //     $parent.style.height=$parent.offsetHeight+'px';
+            //     $parent.style.overflow = 'hidden';
+            //     style.display='block';
+            // }
+            var oHeight;
+            var oPaddingT;
+            var oPaddingB;
+            if(attObj.height!=undefined){
+                oHeight=this.getDomCss(elem,'height').replace('px','');
+                oPaddingT=this.getDomCss(elem,'paddingTop');
+                oPaddingB=this.getDomCss(elem,'paddingBottom');
+            }
+            var duration=isNum?timingStyle+'ms':isNumStr?parseInt(timingStyle)+'ms':'300ms';
+            var timing=(!isNum && !isNumStr && (timingStyle==='linear'||timingStyle.match('ease')))?timingStyle:'ease-in-out';
+            style.transition='all '+duration +' '+timing ;
+            style.webkitTransition='all '+duration +' '+timing;
+            style.oTransition='all '+duration+' '+timing;
+            style.mozTransition='all '+duration+' '+timing;
+            style.overflow='hidden';
+            setTimeout(function () {
+                style.paddingTop='0px';
+                style.paddingBottom='0px';
+                style.height ='0px';
+                commonFun.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'0');
+                setTimeout(function () {
+                    style.display='none';
+                    style.paddingTop=oPaddingT;
+                    style.paddingBottom=oPaddingB;
+                    style.height =oHeight;
+                    commonFun.setOpacity(elem,'100');
+                },parseInt(duration));
+            },-1);
         },
         domReady:function(funList){
             var isReady=false;
@@ -394,6 +449,18 @@
                     }
                 }, time/Math.floor((oldV-opacity)/count));
             }
+        },
+        rotate:function (elem,options) {
+            if(!elem || elem.style==undefined || !options)return;
+            var style=elem.style;
+            var duration=parseInt(options.duration ||300)+'ms';
+            var timing=options.timing||'ease';
+            style.transition='transform '+duration +' '+timing ;
+            style.webkitTransition='transform '+duration +' '+timing ;
+            style.oTransition='transform '+duration +' '+timing ;
+            style.mozTransition='transform '+duration +' '+timing ;
+            style.transform='rotate('+options.deg+'deg)';
+            style.transformOrigin='center center';
         },
         addClass:function (ele,newClass) {
             if(ele.className.match(newClass))return;
