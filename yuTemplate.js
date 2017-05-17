@@ -7,6 +7,21 @@
     //toast 封装一个toast控件
     var commonTemplate={
         select:function () {
+            // options={
+            //     container:obj//DOM容器
+            //     dataJson:list obj//下拉列表数组对象
+            //     styleObj:{
+            //         inputHeight://输入框高度
+            //         inputFontSize://输入框字体大小
+            //         inputColor://输入框颜色
+            //         listHeight://列表单列高度
+            //         listFontSize://列表单列字体大小
+            //         listColor://列表单列颜色
+            //         listHoverFontColor://列表hover状态颜色
+            //     }
+            //     allowInput:bo0len//是否允许输入框输入
+            //     clickBack:function(data){}//回调//data回参
+            // };
             var selectObj=function (options) {
                 this.options = options || {};
                 this.duration=400;
@@ -15,9 +30,15 @@
             selectObj.prototype = {
                 constructor: selectObj,
                 keywords: '',
+                _isRended: false,
+                _isListShow:false,
+                _isResetSize: false,
+                _highlightIndex: -1,
+                _seletedIndex: -1,
                 init: function() {
                     if (!this.options.container) return;
                     this.dataList =(this.options.dataJson)? $$.jsonParse(this.options.dataJson):[{}];
+                    this.isHoverShow=this.options.isHoverShow||false;
                     this.initContainer();
                     this.listenFocus();
                     this.listenBlur();
@@ -78,12 +99,6 @@
                         'id': ''
                     };
                 },
-                _isRended: false,
-                _isListShow:false,
-                _isResetSize: false,
-                _highlightIndex: -1,
-                _seletedIndex: -1,
-
                 arrowRotate:function (deg,elem) {
                     deg=parseInt(deg);
                     deg && $$.rotate(elem||this.$dom1_2_1,{deg:deg});
@@ -147,7 +162,7 @@
                     }
                     this.renderList(searchList);
                 },
-                //input框选中
+                //input框选中//$input.onclick
                 listenFocus: function() {
                     var self = this;
                     this.$input.onclick=function () {
@@ -260,13 +275,65 @@
                 listenMouseover: function() {
                     var self = this;
                     var $current=null;
+                   // var timer=true;
                     this.$container.onmouseover=function (e) {
                         var $this=e.target;
-                        if(!$this.getAttribute('name'))return;
-                        $this.style.color=self.style.listHoverFontColor||'black';
-                        $current && ($current.style.color=self.style.listColor||'black');
-                        $current=$this;
+                        // if(($this.localName=='input' && self._isListShow) ||
+                        //     (!self._isListShow && $this.getAttribute('class') && $this.getAttribute('class').match('seriesSelect')) )
+                        // {
+                        //     console.log($this.localName+$this.getAttribute('class')+'return');
+                        //     return;
+                        // }
+                        if($this.getAttribute('name')){
+                            //console.log($this);
+                            $this.style.color=self.style.listHoverFontColor||'black';
+                            $current && ($current.style.color=self.style.listColor||'black');
+                            $current=$this;
+                        }
+                        else{
+                            //console.log($this);
+                            if(!self._isListShow)self.$input.onclick();
+                            // if(timer){
+                            //     timer=!timer;
+                            //     setTimeout(function () {
+                            //         timer=!timer;
+                            //     },500);
+                            //     self.$input.onclick();
+                            // }
+                        }
                     };
+                    this.$container.onmouseout=function (e) {
+                        var $target=e.target;
+                        //移开后进入的元素
+                        var toElemet;
+                        //IE没有relatedTarget有toElement和fromElement
+                        if(e.relatedTarget){
+                            toElemet=e.relatedTarget;
+                        }
+                        else{
+                            toElemet=e.toElement;
+                        }
+                        //通过新进入的元素父级中是否存在container判断是否还在元素内
+                        var hasAncestor=(function () {
+                            var $parent;
+                            if(toElemet==self.$container)return true;
+                            $parent=toElemet.parentNode;
+                            while($parent){
+                                if($parent==self.$container)return true;
+                                $parent=$parent.parentNode;
+                            }
+                            return false;
+                        })();
+                        // var lastName=self.dataList[self.dataList.length-1].id;
+                        if(hasAncestor)
+                        {
+                            return;
+                        }
+                        if(self._isListShow){
+                          //  console.log($target);
+                            self.$input.onclick();
+                        }
+                    }
                 },
                 listenBodyClick: function() {
                     var self = this;
