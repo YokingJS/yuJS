@@ -330,9 +330,6 @@
                         $$.fadeout(self.msgDIV,0,self.time /3);
                     });
 
-                    // setTimeout(function () {
-                    //     self.msgDIV.parentNode.removeChild(self.msgDIV);
-                    // },this.time+100);
                 }
             };
             return Toast;
