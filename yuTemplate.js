@@ -45,7 +45,7 @@
                     this.$dom1.setAttribute('style','position: relative;width:100%;height: '+(this.style.inputHeight||'30px')
                         +';overflow: hidden;background-color: transparent;');
                     this.$dom2.setAttribute('style','width: 100% ;height: auto;background-color: transparent;z-index: 9999;display:none;');
-                    this.$dom2.setAttribute('class','vivo_commonTemplate_select_list');
+                    this.$dom2.setAttribute('class','select_list_#fes4/ef5');
                     this.$dom1_1=this.$dom1_1||$.createElement('input');
                     this.$dom1_2=this.$dom1_2||$.createElement('div');
                     this.$dom1_1.setAttribute('inBody','true');
@@ -79,13 +79,14 @@
                     };
                 },
                 _isRended: false,
+                _isListShow:false,
                 _isResetSize: false,
                 _highlightIndex: -1,
                 _seletedIndex: -1,
 
                 arrowRotate:function (deg,elem) {
                     deg=parseInt(deg);
-                    deg && officialWebFun.rotateDom(elem||this.$dom1_2_1,deg);
+                    deg && $$.rotate(elem||this.$dom1_2_1,{deg:deg});
                 },
                 highlight: function(idx) {
                     var self=this;
@@ -114,8 +115,9 @@
                         }
                         $$.show(this.$list,{
                             opacity:{},
-                            height:{}
+                            height:''
                         },this.duration);
+                        this._isListShow=!this._isListShow;
                         this.arrowRotate(135);
                         this.highlight();
                     } else {
@@ -145,25 +147,36 @@
                     }
                     this.renderList(searchList);
                 },
+                //input框选中
                 listenFocus: function() {
                     var self = this;
-                    this.$input.onfocus=function () {
-                        if (self._isRended && self.filterDataList.length > 0) {
+                    this.$input.onclick=function () {
+                        //已经渲染过则直接展开
+                        if (self._isRended && self.filterDataList.length > 0 && !self._isListShow) {
                             self.highlight(self._seletedIndex);
-                            $$.show(this.$list,{
+                            $$.show(self.$list,{
                                 opacity:{},
-                                height:{}
-                            },this.duration);
+                                height:''
+                            },self.duration);
+                            self._isListShow=!self._isListShow;
                             self.arrowRotate(135);
                             self.highlight();
                             return;
                         }
+                        if(self._isListShow){
+                            commonFun.JQHide(self.$list,'height','fast');
+                            self.arrowRotate(-45);
+                            self._isListShow=!self._isListShow;
+                            return;
+                        }
+                        //未渲染则渲染
                         self.search();
                     };
                 },
                 listenBlur: function() {
                     var self = this;
                     this.$input.onblur=function () {
+                        self._isListShow=false;
                         if (self.filterDataList.length === 0) {
                             self.$input.value=self.v1;
                             self.keywords = '';
@@ -205,6 +218,9 @@
                 listenTrigger: function() {
                     var self = this;
                     this.$trigger.onclick=function () {
+                        self.$input.onclick();
+                        return;
+                        //以下是原来的触发展开方式,弃用
                         if(!self._isRended){
                             self.search();
                             return;
@@ -212,11 +228,12 @@
                         if (self._isRended && self.filterDataList.length > 0 && self.$list.style.display==='none') {
                             $$.show(this.$list,{
                                 opacity:{},
-                                height:{}
+                                height:''
                             },this.duration);
                             self.highlight();
                             self.arrowRotate(135);
-                        } else {
+                        }
+                        else {
 
                             commonFun.JQHide(self.$list,'height','fast');
                             self.arrowRotate(-45);
@@ -256,7 +273,7 @@
                     $.body.onclick=function (e) {
                         var $this=e.target;
                         if (!$this.getAttribute('inBody')) {
-                            var domList=$.getElementsByClassName('vivo_commonTemplate_select_list');
+                            var domList=$.getElementsByClassName('select_list_#fes4/ef5');
                             for(var i in domList){
                                 if(i=='length')return;
                                 if(domList[i].style.display=='none')continue;
