@@ -275,15 +275,8 @@
                 listenMouseover: function() {
                     var self = this;
                     var $current=null;
-                   // var timer=true;
                     this.$container.onmouseover=function (e) {
-                        var $this=e.target;
-                        // if(($this.localName=='input' && self._isListShow) ||
-                        //     (!self._isListShow && $this.getAttribute('class') && $this.getAttribute('class').match('seriesSelect')) )
-                        // {
-                        //     console.log($this.localName+$this.getAttribute('class')+'return');
-                        //     return;
-                        // }
+                        var $this=e.target;   
                         if($this.getAttribute('name')){
                             //console.log($this);
                             $this.style.color=self.style.listHoverFontColor||'black';
@@ -291,15 +284,8 @@
                             $current=$this;
                         }
                         else{
-                            //console.log($this);
+       
                             if(!self._isListShow)self.$input.onclick();
-                            // if(timer){
-                            //     timer=!timer;
-                            //     setTimeout(function () {
-                            //         timer=!timer;
-                            //     },500);
-                            //     self.$input.onclick();
-                            // }
                         }
                     };
                     this.$container.onmouseout=function (e) {
@@ -324,13 +310,11 @@
                             }
                             return false;
                         })();
-                        // var lastName=self.dataList[self.dataList.length-1].id;
                         if(hasAncestor)
                         {
                             return;
                         }
                         if(self._isListShow){
-                          //  console.log($target);
                             self.$input.onclick();
                         }
                     }
