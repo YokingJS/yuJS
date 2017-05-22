@@ -122,7 +122,16 @@
                                 ((getCSS($this,'float')=='left'||getCSS($this,'float')=='right') && i!=0?0:
                                     tempH=='auto'?'auto': parseFloat(tempH.replace('px','')));
                             if(thisChildH=='auto'||(!thisChildH && thisChildH!=0)){
-                                thisChildH=getCSS($this,'offsetHeight');
+                               thisChildH=getCSS($this,'offsetHeight');
+                                if(thisChildH=='0'||thisChildH=='auto'||thisChildH==0){
+                                    var newSon=getSonHTotal(childNodesList[i]);
+                                    if(newSon)thisChildH=newSon;
+                                    else{
+                                        if(!thisChildH && thisChildH!=0)thisChildH=0;
+                                        var minH=parseFloat(commonFun.getDomCss(childNodesList[i],'minHeight').replace('px',''));
+                                        if(minH)thisChildH=minH;
+                                    }
+                                }
                             }
                             height+=thisChildH;
                         }
