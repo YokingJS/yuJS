@@ -46,6 +46,7 @@
                     this.listenSearch();
                     this.listenBodyClick();
                     this.listenMouseover();
+                    this.listenMove();
                     if(this.dataList.length<=0)return;
                     this.listenSelect();
                 },
@@ -337,6 +338,20 @@
                             }
                         }
                     };
+                },
+                //当PC滚动滚轮手机端滑动页面时，input失去焦点，输入框收起
+                listenMove:function () {
+                    var self=this;
+                    var listener=document.addEventListener||null;
+                    var moveFun=function () {
+                        commonFun.JQHide(self.$list,'height','fast');
+                        self.$input.blur();
+                    }
+                    if(listener){
+                        listener('DOMMouseScroll',moveFun,false);
+                        listener('touchmove',moveFun,false);
+                    }
+                    g.onmousewheel=document.onmousewheel=moveFun;
                 },
                 //更改样式接口
                 setStyle:function (obj) {
