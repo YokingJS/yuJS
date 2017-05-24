@@ -200,30 +200,6 @@
         JQHide:function (elem,directionH,HSpeed) {
             this.hide(elem,directionH,HSpeed);
         },
-        // hideO:function (elem,directionH,HSpeed) {
-        //     if (elem && !HSpeed) {
-        //         elem.style.display = 'none';
-        //         return;
-        //     }
-        //     if(HSpeed){
-        //         HSpeed = HSpeed==='fast'?20:HSpeed==='normal'?10:5;
-        //         elem.style.overflow = 'hidden';
-        //     }
-        //     var  oHeight = this.getDomCss(elem,'height').replace('px','');
-        //     var hAdd=HSpeed;
-        //     var process = function(height,width){
-        //         height = height-hAdd>0?height-hAdd:0;
-        //         if(height !== 0) {
-        //             elem.style.height = height+'px';
-        //             setTimeout(function(){process(height,width);},2);
-        //         }
-        //         else {
-        //             elem.style.display='none';
-        //             elem.style.height = oHeight+'px';
-        //         }
-        //     };
-        //     process(oHeight.replace('px',''));
-        // },
         hide:function (elem,attObj,timingStyle) {
             if(!elem)return;
             var style=elem.style;
@@ -248,19 +224,13 @@
             timingStyle=timingStyle||'ease-in-out';
             var isNum=typeof(timingStyle)==='number';
             var isNumStr=parseInt(timingStyle)>0;
-            // if(elem.parentNode){
-            //     var $parent=elem.parentNode;
-            //     parentOH=$parent.style.height;
-            //     parentOverflow=commonFun.getDomCss($parent,'overflow');
-            //     $parent.style.height=$parent.offsetHeight+'px';
-            //     $parent.style.overflow = 'hidden';
-            //     style.display='block';
-            // }
             var oHeight;
             var oPaddingT;
             var oPaddingB;
             if(attObj.height!=undefined){
                 oHeight=this.getDomCss(elem,'height').replace('px','');
+                //收起是设置style.height=0px，如不设style.height为实际高度会出现瞬跳（style中height初始值和实际高度是不一定相同的）
+                if(oHeight)style.height=oHeight+'px';
                 oPaddingT=this.getDomCss(elem,'paddingTop');
                 oPaddingB=this.getDomCss(elem,'paddingBottom');
             }
