@@ -381,7 +381,7 @@
                     self.msgDIV =$.createElement('div');
                     self.msgDIV.setAttribute('id','toastMessage');
                     self.msgDIV.setAttribute('style',
-                        'position:absolute;top:50%;z-index:999;width: 100%;text-align:center;color:white;font-size:18px;border-radius:2px;');
+                        'position:fixed;top:50%;z-index:999;width: 100%;text-align:center;color:white;font-size:18px;border-radius:2px;');
                     self.msgDIV.innerHTML='<div  style="background-color: black;display:inline-block;padding:10px;">'
                         +'<span style="color:white" >    '+this.message +  '</span>'
                         +'</div>';
