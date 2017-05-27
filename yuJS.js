@@ -76,9 +76,19 @@
                 return elem.currentStyle[name];
             }
             else {
+                var oS=elem.style[name];
+                //样式如果值为0时，重新设置为auto//如该元素style.height=0px（子元素有高度），此时如不赋值auto取出的该元素内容部分高度为0
+                if(parseFloat(oS)===0)elem.style[name]='auto';
                 var style = document.defaultView.getComputedStyle(elem,null);
-                if(style[name])return style[name];
+                if(style[name]){
+                    var retStr=style[name];
+                    //如重新设置了样式，则还原
+                    if(parseFloat(oS)===0)elem.style[name]=oS;
+                    return retStr;
+                }
                 style=elem[name];
+                //如重新设置了样式，则还原
+                if(parseFloat(oS)===0)elem.style[name]=oS;
                 if(style) return style;
                 else return '0';
             }
@@ -86,7 +96,7 @@
         JQShow:function (elem,directionH,HSpeed) {
             commonFun.show(elem,directionH,HSpeed);
         },
-        show:function (elem,attObj,timingStyle) {
+      show:function (elem,attObj,timingStyle) {
             if(!elem)return;
             var style=elem.style;
             var parentOH='';
@@ -109,26 +119,26 @@
             }
             timingStyle=timingStyle||'ease';
             var getHeight=function (ele) {
-                    var  h = commonFun.getDomCss(ele,'height').replace('px','');
+                    var  h = yuJS.getDomCss(ele,'height').replace('px','');
                     var getSonHTotal=function (father) {
                         var height=0;
                         var childNodesList=father.childNodes;
                         if(!childNodesList)return false;
                         for(var i=0;i<childNodesList.length;i++){
                             var $this=childNodesList[i];
-                            var getCSS=commonFun.getDomCss;
+                            var getCSS=yuJS.getDomCss;
                             var tempH=getCSS($this,'height');
                             var thisChildH=getCSS($this,'display')=='none'?0:
                                 ((getCSS($this,'float')=='left'||getCSS($this,'float')=='right') && i!=0?0:
                                     tempH=='auto'?'auto': parseFloat(tempH.replace('px','')));
                             if(thisChildH=='auto'||(!thisChildH && thisChildH!=0)){
-                               thisChildH=getCSS($this,'offsetHeight');
+                                thisChildH=getCSS($this,'offsetHeight');
                                 if(thisChildH=='0'||thisChildH=='auto'||thisChildH==0){
                                     var newSon=getSonHTotal(childNodesList[i]);
                                     if(newSon)thisChildH=newSon;
                                     else{
                                         if(!thisChildH && thisChildH!=0)thisChildH=0;
-                                        var minH=parseFloat(commonFun.getDomCss(childNodesList[i],'minHeight').replace('px',''));
+                                        var minH=parseFloat(yuJS.getDomCss(childNodesList[i],'minHeight').replace('px',''));
                                         if(minH)thisChildH=minH;
                                     }
                                 }
@@ -142,6 +152,7 @@
                     }
                     return h;
                 };
+
             var isNum=typeof(timingStyle)==='number';
             var isNumStr=parseInt(timingStyle)>0;
             if(elem.parentNode){
@@ -157,22 +168,27 @@
             var oHeight;
             var oPaddingT=this.getDomCss(elem,'paddingTop');
             var oPaddingB=this.getDomCss(elem,'paddingBottom');
-            var oMarginT=(function () {
-                elem=commonFun.deleteEmptyNode(elem);
+            var oMarginT=this.getDomCss(elem,'marginTop');
+            var oMarginB=this.getDomCss(elem,'marginBottom');
+            var sonMarginT=(function () {
+                elem=yuJS.deleteEmptyNode(elem);
                 var childList=elem.childNodes;
                 var total=0;
                 for(var i=0,l=childList.length;i<l;i++){
-                    total+=parseFloat(commonFun.getDomCss(childList[i],'marginTop')) ;
+                    total+=parseFloat(yuJS.getDomCss(childList[i],'marginTop')) ;
                     //只取一个存在margin的子元素，之后存在margin如果计算，需要判断是否和当前在同一行，同一行的margin不因计算
                     if(total>0)return total+'px';
                 }
                 return '0px';
             })();
             if(attObj.height!=undefined){
-                style.paddingTop='0';
-                style.paddingBottom='0';
                 oHeight=getHeight(elem);
+                if(oPaddingT){style.paddingTop='0';}
+                if(oPaddingB){style.paddingBottom='0';}
+                if(oMarginT){style.marginTop=0;}
+                if(oMarginB){style.marginBottom=0;}
                 style.height = 0+'px';
+                style.overflow='hidden';
             }
             var duration=isNum?timingStyle+'ms':isNumStr?parseInt(timingStyle)+'ms':'300ms';
             var timing=(!isNum && !isNumStr && (timingStyle==='linear'||timingStyle.match('ease')))?timingStyle:'ease-in-out';
@@ -188,12 +204,14 @@
                 }
                 style.paddingTop=oPaddingT;
                 style.paddingBottom=oPaddingB;
-                style.height =parseFloat(oHeight)+parseFloat(oMarginT)+'px';
+                if(oMarginT){style.marginTop=oMarginT;}
+                if(oMarginB){style.marginBottom=oMarginB;}
+                style.height =parseFloat(oHeight)+parseFloat(sonMarginT)+'px';
                 setTimeout(function () {
                     style.height='auto';
                 },parseInt(duration)+50);
                 setTimeout(function () {
-                    commonFun.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'100');
+                    yuJS.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'100');
                 },parseInt(duration)/6);
             },-1);
         },
