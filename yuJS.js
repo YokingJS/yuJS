@@ -470,6 +470,7 @@
         },
         //@param obj parse//parse.$box监听元素//parse.dir XY方向//parse.posType移动元素相关参数//parse.pre是否阻止其他事件
         //@param obj  parse.posType://posType.type '01' first-child//posType.maxX 水平最大移动值
+        //此方法有待更新。将转换为CSS3动画
         scroll:function (parse) {
             if(!parse.$box)return;
             //定义动画时间和频率以及每次移动幅度
