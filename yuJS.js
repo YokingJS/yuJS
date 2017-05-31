@@ -1,9 +1,10 @@
 (function (g,$,undefined) {
-    //commonFun是一个全局方法库//实现了对当前项目的零耦合
+    //yuJS是一个全局方法库//实现了对当前项目的零耦合
     //jsonParse 一个全局parse方法
     //screenWidth 获取当前屏幕可视区宽度
     //setEmFun 针对手机端设置rem或者em的基础值
     //deleteEmptyNode 删除节点中空子节点、注释子节点、换行或者空格子节点
+    //prevNode 取当前元素上一个节点
     //nextNode 取当前节点下一个节点
     //childIndex 当前元素是父元素的第几个元素
     //getDomCss 取节点某个属性
@@ -18,10 +19,11 @@
     //fadeout元素淡入淡出
     //rotate旋转元素
     //addClass 元素添加某个class
+    //addTransition元素添加transition属性
     //minusClass 元素减去某个class
     //scroll 元素添加滚动事件
     //pause延时方法
-    var commonFun={
+    var yuJS={
         jsonParse : g.JSON && JSON.parse ? JSON.parse : eval,
         screenWidth:function (dom) {
             dom=dom||$;
@@ -48,6 +50,11 @@
                 }
             }
             return newElem;
+        },
+        prevNode:function (elem) {
+            var $parent=yuJS.deleteEmptyNode(elem.parentNode);
+            var thisIndex=yuJS.childIndex(elem);
+            return thisIndex-1>=0 && $parent.childNodes[thisIndex-1];
         },
         nextNode:function (elem) {
             var newElem;
@@ -93,10 +100,12 @@
                 else return '0';
             }
         },
-        JQShow:function (elem,directionH,HSpeed) {
-            commonFun.show(elem,directionH,HSpeed);
-        },
-      show:function (elem,attObj,timingStyle) {
+        //     $$.show DEMO
+        //     $$.show(elem,{
+        //       opacity:'',
+        //       height:''/'const'
+        //     },timingStyle)
+        show:function (elem,attObj,timingStyle) {
             if(!elem)return;
             var style=elem.style;
             var parentOH='';
@@ -107,6 +116,7 @@
             }
             if(!attObj)return;
             if(attObj.opacity!=undefined){
+               // yuJS.addTransition(style);
                 style.transition='' ;
                 style.webkitTransition='';
                 style.oTransition='';
@@ -152,7 +162,6 @@
                     }
                     return h;
                 };
-
             var isNum=typeof(timingStyle)==='number';
             var isNumStr=parseInt(timingStyle)>0;
             if(elem.parentNode){
@@ -215,9 +224,6 @@
                 },parseInt(duration)/6);
             },-1);
         },
-        JQHide:function (elem,directionH,HSpeed) {
-            this.hide(elem,directionH,HSpeed);
-        },
         hide:function (elem,attObj,timingStyle) {
             if(!elem)return;
             var style=elem.style;
@@ -242,12 +248,19 @@
             timingStyle=timingStyle||'ease-in-out';
             var isNum=typeof(timingStyle)==='number';
             var isNumStr=parseInt(timingStyle)>0;
+            // if(elem.parentNode){
+            //     var $parent=elem.parentNode;
+            //     parentOH=$parent.style.height;
+            //     parentOverflow=yuJS.getDomCss($parent,'overflow');
+            //     $parent.style.height=$parent.offsetHeight+'px';
+            //     $parent.style.overflow = 'hidden';
+            //     style.display='block';
+            // }
             var oHeight;
             var oPaddingT;
             var oPaddingB;
             if(attObj.height!=undefined){
                 oHeight=this.getDomCss(elem,'height').replace('px','');
-                //收起是设置style.height=0px，如不设style.height为实际高度会出现瞬跳（style中height初始值和实际高度是不一定相同的）
                 if(oHeight)style.height=oHeight+'px';
                 oPaddingT=this.getDomCss(elem,'paddingTop');
                 oPaddingB=this.getDomCss(elem,'paddingBottom');
@@ -263,13 +276,13 @@
                 style.paddingTop='0px';
                 style.paddingBottom='0px';
                 style.height ='0px';
-                commonFun.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'0');
+                yuJS.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'0');
                 setTimeout(function () {
                     style.display='none';
                     style.paddingTop=oPaddingT;
                     style.paddingBottom=oPaddingB;
                     style.height =oHeight;
-                    commonFun.setOpacity(elem,'100');
+                    yuJS.setOpacity(elem,'100');
                 },parseInt(duration));
             },-1);
         },
@@ -447,6 +460,10 @@
                 }, time/Math.floor((oldV-opacity)/count));
             }
         },
+        //DEMO
+        // $$.rotate(elem,{
+        //     deg:0
+        // });
         rotate:function (elem,options) {
             if(!elem || elem.style==undefined || !options)return;
             var style=elem.style;
@@ -463,35 +480,61 @@
             if(ele.className.match(newClass))return;
             ele.className+=(" "+newClass);
         },
+        addTransition:function (ele,attr,duration,timing) {
+            var style=(ele && ele.style)||ele;
+            if(!!ele && !attr){
+                style.transition='';
+                style.webkitTransition='';
+                style.oTransition='';
+                style.mozTransition='';
+                return;
+            }
+            timing=timing||'ease-in-out';
+            duration=duration||'500ms';
+            attr=attr||'all';
+            style.transition=attr+' '+duration +' '+timing ;
+            style.webkitTransition=attr+' '+duration +' '+timing;
+            style.oTransition=attr+' '+duration+' '+timing;
+            style.mozTransition=attr+' '+duration+' '+timing;
+        },
         minusClass:function (ele,className) {
             if(!ele.className.match(className))return;
             var reg = new RegExp('(\\s|^)' + className + '(\\s|$)');
             ele.className = ele.className.replace(reg, ' ');
         },
         //@param obj parse//parse.$box监听元素//parse.dir XY方向//parse.posType移动元素相关参数//parse.pre是否阻止其他事件
-        //@param obj  parse.posType://posType.type '01' first-child//posType.maxX 水平最大移动值
-        //此方法有待更新。将转换为CSS3动画
+        //@param obj  parse.posType【posType.type=='01'表示first-child;  posType.maxX 水平最大移动值 ; posType.minX 水平最小移动值 】
+        //v0.1 只支持marginLeft作为参数来移动元素.后期拓展
         scroll:function (parse) {
             if(!parse.$box)return;
             //定义动画时间和频率以及每次移动幅度
             var totalTime=1000;
             var frequency=50;
             var step=null;
+            //touchXS:X方向touch的开始位置;touchY：Y方向...
             var touchXS,touchYS,touchXE,touchYE,moveX,moveY,startTime,endTime,moveTime,speedX,$pos;
+            //禁用滑动区域touchmove事件以备重新定义
             parse.prevent && parse.$box.addEventListener('touchmove',function () {
                 event.preventDefault();
             },false);
-            //elem 父级 posObj 移动元素相关参数,sx SPEED_X,mx MOVE_X,sy SPEED_Y,my MOVE_Y
-            var moveChoseEle=function (elem,posObj,sx,mx,sy,my) {
+            //根据各参数做相应移动
+            //elem 移动区域; posObj 移动元素相关参数,sx X方向移动速度,mx X方向移动距离,sy SPEED_Y,my MOVE_Y
+            var moveChooseEle=function (elem,posObj,sx,mx,sy,my) {
+                //计算移动
                 var moveElem=function ($pos,obj,sx,mx) {
+                    var posStyle=$pos && $pos.style;
+                    if(!posStyle)return
                     //获取当前margin的单位rem/px/em
-                    var unitSource=$pos.style.marginLeft;
+                    var unitSource=posStyle.marginLeft||posStyle.left||posStyle.paddingLeft;
+                    if(!unitSource)return;
+                    //获取尺寸单位
                     var unit=unitSource.match('rem')?'rem':(unitSource.match('px')?'px':(unitSource.match('em')?'em':'px'));
                     //rem&em时换算像素为rem
                     if(unit=='rem'||unit=='em'){
+                        //rem或者em需要计算比例，转mx(mx以px为单位需要转为rem/em为单位)
                         mx=mx/$$.actualPx;
+                        //alert(mx);
                     }
-                    //alert(obj.maxX+'#'+obj.minX);
                     if(sx && !sy){
                         //sx低于0.5则实际滑动多少是多少，大于3则滑动到最后
                         var absSx=Math.abs(sx);
@@ -499,60 +542,79 @@
                         //可以滑动的最大距离
                         var range=obj.maxX-obj.minX;
                         //当前移动的距离
-                        var changeMargin=absSx<=0.5?mx:absSx<=3?range*(absSx-0.5)/2.5:range;
-                        changeMargin=changeMargin>range?range:changeMargin;
-                       // alert(changeMargin);
-                        var process=function (elem,change,oldM) {
+                        var changeMargin=absSx<=0.5?mx:absSx<=3?range*sx/3:sx*range/absSx;
+                        //alert(changeMargin+'######'+range+'='+obj.maxX+'-'+obj.minX);
+                        var process=function (style,change,oldM) {
                             if(!step)step=change/frequency;
                             //原来的margin值
-                            var oldMargin=oldM || $pos.style.marginLeft;
+                            var oldMargin=oldM || posStyle.marginLeft;
                             //oldMargin取数值部分
                             oldMargin=parseFloat(oldMargin);
-                            var newMargin=oldMargin+(sx>=0?step:-step);
-                            setTimeout(function () {
-                                if(newMargin<obj.minX){$pos.style.marginLeft=obj.minX+unit;return;}
-                                if(newMargin>obj.maxX){$pos.style.marginLeft=obj.maxX+unit;return;}
-                                $pos.style.marginLeft=newMargin+unit;
-                                change-=step;
-                                change=change<0?0:change;
-                                if(change>0)process($pos,change,newMargin+unit);
-
-                            },totalTime/frequency);
+                            var newMargin=oldMargin+change;
+                            yuJS.addTransition(style,'all','500ms','ease-in-out');
+                            if(newMargin<obj.minX){style.marginLeft=obj.minX+unit;return;}
+                            if(newMargin>obj.maxX){style.marginLeft=obj.maxX+unit;return;}
+                            style.marginLeft=newMargin+unit;
+                            //使用JS一帧一帧移动，该方法被弃用，改为CSS3的动画实现
+                            // var newMargin=oldMargin+(sx>=0?step:-step);
+                            // setTimeout(function () {
+                            //     if(newMargin<obj.minX){posStyle.marginLeft=obj.minX+unit;return;}
+                            //     if(newMargin>obj.maxX){posStyle.marginLeft=obj.maxX+unit;return;}
+                            //     posStyle.marginLeft=newMargin+unit;
+                            //     change-=step;
+                            //     change=change<0?0:change;
+                            //     if(change>0)process($pos,change,newMargin+unit);
+                            // },totalTime/frequency);
                         };
-                        process($pos,changeMargin);
+                        process(posStyle,changeMargin);
                     }
                 };
                 switch (posObj.type){
+                    //01表示移动参考点是$box的第一个元素
                     case'01':
+                        //参考点元素
                         $pos=$$.deleteEmptyNode(elem).firstChild;
-                        if(sx && !sy){
-                            moveElem($pos,posObj,sx,mx);
-                        }
+                        //计算移动
+                        moveElem($pos,posObj,sx,mx);
+                        break;
+                    default:break;
                 }
             };
+            //根据X方向计算整个滑动，directionX是计算方法的入口函数
             var directionX=function(){
+                //x方向计算依赖X方向起始和结束位置，没有则退出
                 if(!touchXS || !touchXE)return;
+                //移动距离
                 moveX=touchXE-touchXS;
+                //移动时间
                 moveTime=endTime-startTime;
+                //移动速度
                 speedX=moveX/moveTime;
-                moveChoseEle(parse.$box,parse.posType,speedX,moveX);
+                //根据各参数做相应移动
+                moveChooseEle(parse.$box,parse.posType,speedX,moveX);
             };
             parse.$box.addEventListener('touchstart',function (e) {
-                if(e.targetTouches.length<=0)return;
+                //没有触点跳出
+                var targetTouches=e.targetTouches;
+                if(targetTouches.length<=0)return;
+                //touch起始时间
                 startTime=new Date().getTime();
-                var targetTouch=e.targetTouches[0];
+                var targetTouch=targetTouches[0];
+                //touchXS:X方向touch的开始位置;touchY：Y方向...
                 touchXS=targetTouch.clientX;
                 touchYS=targetTouch.clientY;
-                // alert(touchXS+'&'+touchYS);
             },false);
             parse.$box.addEventListener('touchend',function (e) {
-                //alert(e.changedTouches.length);
-                if(e.changedTouches.length<=0)return;
+                var changedTouche=e.changedTouches;
+                if(changedTouche.length<=0)return;
+                //获取touch结束时间
                 endTime=new Date().getTime();
-                var targetTouch=e.changedTouches[0];
+                var targetTouch=changedTouche[0];
+                //touchXE:X方向touch的结束位置;touchYE：Y方向...
                 touchXE=targetTouch.clientX;
                 touchYE=targetTouch.clientY;
                 switch (parse.direction){
+                    //'x'表示根据X方向来计算滑动
                     case 'x':directionX();break;
                 }
             },false);
@@ -567,7 +629,7 @@
             }
         }
     };
-    g.commonFun=g.$$=commonFun;
+    g.$$=g.yuJS=g.commonFun=yuJS;
     //给String类添加trim方法
     if(!String.prototype.trim){
         String.prototype.trim=function(){
@@ -575,7 +637,3 @@
         }
     }
 })(window,document);
-
-
-
-
