@@ -395,7 +395,9 @@
                     $$.fadein(self.msgDIV,100,self.time*2/3,function () {
                         $$.fadeout(self.msgDIV,0,self.time /3);
                     });
-
+                     setTimeout(function () {
+                        self.msgDIV.parentNode.removeChild(self.msgDIV);
+                    },self.time+100);
                 }
             };
             return Toast;
