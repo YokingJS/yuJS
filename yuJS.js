@@ -23,6 +23,8 @@
     //minusClass 元素减去某个class
     //scroll 元素添加滚动事件
     //pause延时方法
+    //setCookie添加cookie，默认有效期365天
+    //delCookie删除coolie
     var yuJS={
         jsonParse : g.JSON && JSON.parse ? JSON.parse : eval,
         screenWidth:function (dom) {
@@ -626,6 +628,30 @@
                 now = new Date();
                 if (now.getTime() > exitTime)
                     return;
+            }
+        },
+        setCookie:function (name, value) {
+            var Days = 365;
+            var minutes = 60;
+            var exp = new Date();
+            exp.setTime(exp.getTime() + Days * 24 * 60 * 60 * 1000);
+            document.cookie = name + "=" + encodeURI(value) + ";expires=" + exp.toGMTString() + "; path=/";
+        },
+        getCookie:function (name) {
+            //"(^| )"+ name + "=([^;]*)(;|$)")==>开始或者任意开头+name+非‘;’+‘;’或结束
+            var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+
+            if (arr = document.cookie.match(reg))
+                return decodeURI(arr[2]);
+            else
+                return null;
+        },
+        delCookie:function (name) {
+            var exp = new Date();
+            exp.setTime(exp.getTime() - 1);
+            var cval = yuJS.getCookie(name);
+            if (cval != null){
+                document.cookie = name + "=" + cval + ";expires=" + exp.toGMTString() + "; path=/";
             }
         }
     };
