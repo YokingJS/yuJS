@@ -1,12 +1,8 @@
-/**
- * Created by yoking on 2017/2/23.
- */
-
 (function (g,$,undefined) {
     //select 封装一个select控件
     //toast 封装一个toast控件
     var commonTemplate={
-       select:function () {
+        select:function () {
             // options={
             //     container:obj//DOM容器
             //     dataJson:list obj//下拉列表数组对象
@@ -51,7 +47,7 @@
                     this.listenSelect();
                 },
                 initContainer: function(changeObj) {
-                    this.$container =commonFun.deleteEmptyNode(this.options.container);
+                    this.$container =yuJS.deleteEmptyNode(this.options.container);
                     this.$container.innerHTML='';
                     this.$container.style.position='relative';
                     this.allowInput=(typeof(this.options.allowInput)!='undefined')?this.options.allowInput:true;
@@ -62,28 +58,36 @@
                     v2=(!v2)?"":v2;
                     this.$dom1=this.$dom1||$.createElement('div');
                     this.$dom2=this.$dom2||$.createElement('div');
+                    //$dom1是$container的第一元素（input的父级元素）
                     this.$dom1.setAttribute('inBody','true');
+                    this.$dom1.setAttribute('first-line','true');
                     this.$dom2.setAttribute('inBody','true');
                     this.$dom1.setAttribute('style','position: relative;width:100%;height: '+(this.style.inputHeight||'30px')
                         +';overflow: hidden;background-color: transparent;');
                     this.$dom2.setAttribute('style','width: 100% ;height: auto;background-color: transparent;z-index: 9999;display:none;');
                     this.$dom2.setAttribute('class','select_list_#fes4/ef5');
                     this.$dom1_1=this.$dom1_1||$.createElement('input');
+                    this.$dom1_1.setAttribute('first-line','true');
                     this.$dom1_2=this.$dom1_2||$.createElement('div');
+                    this.$dom1_2.setAttribute('first-line','true');
                     this.$dom1_1.setAttribute('inBody','true');
                     this.$dom1_2.setAttribute('inBody','true');
                     this.$dom1_1.setAttribute('readonly',(this.allowInput)?'':'readonly');
                     this.$dom1_1.setAttribute('style',
                         'width:80%;max-width:calc(92% - 30px); height: 100%;position: absolute;left: 5%;margin-left: 4px;background-color: transparent;'
+                            +'-ms-text-overflow: ellipsis;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;'
                         +'font-size: '+(this.style.inputFontSize||'14px')+';color:'+(this.style.inputColor||'#333333')
                         +';border: none;line-height:'+(this.style.inputHeight||'30px')+';'+((this.allowInput)?'':'cursor:pointer;'));
                     this.$dom1_1.setAttribute('value',this.v1);
                     this.$dom1_1.setAttribute('placeholder',v2);
-                    this.$dom1_2.setAttribute('style','height: 30px;width: 30px;position: absolute;right: 0;top: 0;background-color: transparent;padding-top: 8px;');
+                    this.$dom1_2.setAttribute('style','height: 30px;width: 30px;position: absolute;right: 0;top:calc(50% - 15px);background-color: transparent;');
                     this.$dom1_2.setAttribute('onmouseover','this.style.cursor=\'pointer\';');
                     this.$dom1_2_1=this.$dom1_2_1||$.createElement('div');
-                    this.$dom1_2_1.setAttribute('style','width: 14px;height: 14px;transform: rotate(-45deg);background-color: transparent;'+
-                        'border-left:2px;border-bottom: 2px;border-style: solid;border-color: #333333;');
+                    this.$dom1_2_1.setAttribute('first-line','true');
+                    this.$dom1_2_1.setAttribute('style','width: 12px;height: 12px;transform: rotate(-45deg);transform-origin:0% 100%;background-color: transparent;'
+                            +'position:absolute;top:calc(50% - 7px);left:calc(50% - 6px);'
+                            +'border-left:1px;border-bottom: 1px;border-style: solid;border-color: #333333;');
+
                     this.$dom1_2_1.setAttribute('inBody','true');
                     this.$dom1_2.appendChild(this.$dom1_2_1);
                     $$.appendChilds(this.$dom1,[this.$dom1_1,this.$dom1_2]);
@@ -91,10 +95,10 @@
 
                     this.clickBack=(this.options.clickBack)?this.options.clickBack:function () {};
 
-                    this.$input = commonFun.deleteEmptyNode(this.$container.childNodes[0]).childNodes[0];
+                    this.$input = yuJS.deleteEmptyNode(this.$container.childNodes[0]).childNodes[0];
                     this.$list = this.$container.childNodes[1];
                     this.$filterList = {};
-                    this.$trigger = commonFun.nextNode(this.$input);
+                    this.$trigger = yuJS.nextNode(this.$input);
                     this.$container.data={
                         'customSelect': this,
                         'id': ''
@@ -108,7 +112,7 @@
                     var self=this;
                     idx = idx !== undefined && idx > -1 ? idx : this._highlightIndex;
                     idx >= 0&& idx !=null && (function () {
-                        var childeList=commonFun.deleteEmptyNode(self.$list).childNodes;
+                        var childeList=yuJS.deleteEmptyNode(self.$list).childNodes;
                         for(var i=0;i<childeList.length;i++){
                             childeList[i].style.color= idx==i?self.style.listHoverFontColor||'black'
                                 :self.style.listColor||'black';
@@ -122,7 +126,7 @@
                         for (var i = 0; i < len; i++) {
                             var $span=$.createElement('div');
                             $span.setAttribute('name',list[i].id||'null');
-                            $span.innerHTML=decodeURI(list[i].des)||'';
+                            $span.innerHTML=decodeURI(list[i].des||'');
                             $span.setAttribute('style',
                                 'background-color: transparent; padding-left: 5px;width:auto;height:'+(this.style.listHeight||'25px')
                                 +';line-height: '+(this.style.listHeight||'25px')+';font-size: '+(this.style.listFontSize||'14px')+';'
@@ -138,7 +142,10 @@
                         this.highlight();
                     } else {
                         this.$list.innerHTML=listTpl;
-                        commonFun.JQHide(this.$list,'height','fast');
+                        yuJS.hide(this.$list,{
+                            opacity:'',
+                            height:''
+                        },'300');
                         self.arrowRotate(-45);
                         self.$input.onblur();
                     }
@@ -166,8 +173,9 @@
                 //input框选中//$input.onclick
                 listenFocus: function() {
                     var self = this;
-                    this.$input.onclick=function () {
+                    this.inputTouchend=this.$input.ontouchend=function () {
                         //已经渲染过则直接展开
+                        console.log(1);
                         if (self._isRended && self.filterDataList.length > 0 && !self._isListShow) {
                             self.highlight(self._seletedIndex);
                             $$.show(self.$list,{
@@ -180,7 +188,10 @@
                             return;
                         }
                         if(self._isListShow){
-                            commonFun.JQHide(self.$list,'height','fast');
+                            yuJS.hide(self.$list,{
+                                opacity:'',
+                                height:''
+                            },'300');
                             self.arrowRotate(-45);
                             self._isListShow=!self._isListShow;
                             return;
@@ -192,7 +203,7 @@
                 listenBlur: function() {
                     var self = this;
                     this.$input.onblur=function () {
-                        self._isListShow=false;
+                        //self._isListShow=false;
                         if (self.filterDataList.length === 0) {
                             self.$input.value=self.v1;
                             self.keywords = '';
@@ -223,7 +234,10 @@
                             var selectObj = self.filterDataList[self._highlightIndex];
                             self.$input.value=selectObj.name;
                             self.$container.data.value= selectObj.id;
-                            commonFun.JQHide(self.$list,"height","fast");
+                            yuJS.hide(self.$list,{
+                                opacity:'',
+                                height:''
+                            },'300');
                             self.arrowRotate(-45);
                             self.$input.onblur();
                         } else {
@@ -233,28 +247,33 @@
                 },
                 listenTrigger: function() {
                     var self = this;
-                    this.$trigger.onclick=function () {
-                        self.$input.onclick();
+                    this.$trigger.ontouchend=function () {
+                        console.log('trigger');
+                        self.inputTouchend();
+
                         return;
                         //以下是原来的触发展开方式,弃用
-                        if(!self._isRended){
-                            self.search();
-                            return;
-                        }
-                        if (self._isRended && self.filterDataList.length > 0 && self.$list.style.display==='none') {
-                            $$.show(this.$list,{
-                                opacity:{},
-                                height:''
-                            },this.duration);
-                            self.highlight();
-                            self.arrowRotate(135);
-                        }
-                        else {
-
-                            commonFun.JQHide(self.$list,'height','fast');
-                            self.arrowRotate(-45);
-                            self.$input.onblur();
-                        }
+                        // if(!self._isRended){
+                        //     self.search();
+                        //     return;
+                        // }
+                        // if (self._isRended && self.filterDataList.length > 0 && self.$list.style.display==='none') {
+                        //     $$.show(this.$list,{
+                        //         opacity:{},
+                        //         height:''
+                        //     },this.duration);
+                        //     self.highlight();
+                        //     self.arrowRotate(135);
+                        // }
+                        // else {
+                        //
+                        //     yuJS.hide(self.$list,{
+                        //         opacity:'',
+                        //         height:''
+                        //     },'300');
+                        //     self.arrowRotate(-45);
+                        //     self.$input.onblur();
+                        // }
                     };
                 },
                 listenSelect: function() {
@@ -265,10 +284,13 @@
                         var $this = e.target;
 
                         self.keywords = $this.innerHTML;
-                        commonFun.JQHide(self.$list,'height','fast');
+                        yuJS.hide(self.$list,{
+                            opacity:'',
+                            height:''
+                        },'300');
                         self.arrowRotate(-45);
                         self.$container.data.id= id;
-                        self._highlightIndex= self._seletedIndex=commonFun.childIndex($this);
+                        self._highlightIndex= self._seletedIndex=yuJS.childIndex($this);
                         self.$input.value=$this.innerHTML;
                         self.clickBack($this.getAttribute('name'));
                     };
@@ -277,16 +299,18 @@
                     var self = this;
                     var $current=null;
                     this.$container.onmouseover=function (e) {
-                        var $this=e.target;   
+                        var $this=e.target;
                         if($this.getAttribute('name')){
-                            //console.log($this);
                             $this.style.color=self.style.listHoverFontColor||'black';
                             $current && ($current.style.color=self.style.listColor||'black');
                             $current=$this;
                         }
                         else{
-       
-                            if(!self._isListShow)self.$input.onclick();
+                            if(!self._isListShow && $$.screenWidth()>767){
+                                console.log('onmouseover');
+                                self.inputTouchend();
+
+                            }
                         }
                     };
                     this.$container.onmouseout=function (e) {
@@ -311,12 +335,15 @@
                             }
                             return false;
                         })();
+                        // var lastName=self.dataList[self.dataList.length-1].id;
                         if(hasAncestor)
                         {
                             return;
                         }
                         if(self._isListShow){
-                            self.$input.onclick();
+                            console.log('onmouseout');
+                            self.inputTouchend();
+
                         }
                     }
                 },
@@ -329,12 +356,15 @@
                             for(var i in domList){
                                 if(i=='length')return;
                                 if(domList[i].style.display=='none')continue;
-                                commonFun.JQHide(domList[i],'height','fast');
-                                var $thisGFather=commonFun.deleteEmptyNode(domList[i].parentNode).childNodes[0];
-                                var $thisFather=commonFun.deleteEmptyNode($thisGFather).lastChild;
-                                var $target=commonFun.deleteEmptyNode($thisFather).lastChild;
+                                yuJS.hide(domList[i],{
+                                    opacity:'',
+                                    height:''
+                                },'300');
+                                var $thisGFather=yuJS.deleteEmptyNode(domList[i].parentNode).childNodes[0];
+                                var $thisFather=yuJS.deleteEmptyNode($thisGFather).lastChild;
+                                var $target=yuJS.deleteEmptyNode($thisFather).lastChild;
                                 self.arrowRotate.call($target,-45,$target);
-                                commonFun.deleteEmptyNode($thisGFather).firstChild.onblur();
+                                yuJS.deleteEmptyNode($thisGFather).firstChild.onblur();
                             }
                         }
                     };
@@ -344,7 +374,10 @@
                     var self=this;
                     var listener=document.addEventListener||null;
                     var moveFun=function () {
-                        commonFun.JQHide(self.$list,'height','fast');
+                        yuJS.hide(self.$list,{
+                            opacity:'',
+                            height:''
+                        },'300');
                         self.$input.blur();
                     }
                     if(listener){
@@ -395,7 +428,7 @@
                     $$.fadein(self.msgDIV,100,self.time*2/3,function () {
                         $$.fadeout(self.msgDIV,0,self.time /3);
                     });
-                     setTimeout(function () {
+                    setTimeout(function () {
                         self.msgDIV.parentNode.removeChild(self.msgDIV);
                     },self.time+100);
                 }
@@ -405,7 +438,3 @@
     };
     g.commonTemplate = commonTemplate;
 })(window,document);
-
-
-
-
