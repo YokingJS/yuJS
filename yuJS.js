@@ -688,7 +688,7 @@
             }
         },
         isArray:function (obj) {
-            return Object.prototype.toString.call(obj) === 'Array';
+            return Object.prototype.toString.call(obj) ===  '[object Array]';
         },
         setCookie:function (name, value) {
             var Days = 365;
