@@ -170,9 +170,11 @@
                         done(childrenNodes[i]);
                     }
                 }
-            }
+                else return;
+            };
             done(elem);
             if(!selector) return arr;
+            //存在参数selector,则取符合条件的元素
             //根据选择器第一个字符判断是什么类型的选择器,然后匹配元素并返回匹配元素
             var matchNodes=[];
             switch (selector.charAt(0)){
@@ -194,6 +196,15 @@
                         }
                     }
                     if(matchNodes[0])return matchNodes[0];
+                    break;
+                case '[':
+                    for(var i=0,l=arr.length;i<l;i++){
+                        var attribute=arr[i].getAttribute((selector.substr(1,selector.length-1)).substr(0,selector.length-2));
+                        if(attribute||attribute===''){
+                            matchNodes.push(arr[i]);
+                        }
+                    }
+                    if(matchNodes[0])return matchNodes;
                     break;
                 default:break;
             }
@@ -688,7 +699,7 @@
             }
         },
         isArray:function (obj) {
-            return Object.prototype.toString.call(obj) ===  '[object Array]';
+            return Object.prototype.toString.call(obj) === '[object Array]';
         },
         setCookie:function (name, value) {
             var Days = 365;
@@ -713,6 +724,16 @@
             if (cval != null){
                 document.cookie = name + "=" + cval + ";expires=" + exp.toGMTString() + "; path=/";
             }
+        },
+        newGuid:function () {
+            var guid = "";
+            for (var i = 1; i <= 32; i++){
+                var n = Math.floor(Math.random()*16.0).toString(16);
+                guid +=   n;
+                if((i==8)||(i==12)||(i==16)||(i==20))
+                    guid += "-";
+            }
+            return guid;
         }
     };
     g.$$=g.yuJS=g.commonFun=yuJS;
