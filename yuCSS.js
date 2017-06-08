@@ -1,8 +1,9 @@
 (function (g,$,undefined) {
-    //yuCSS是一个基于yuJS，辅助HTML样式布局控制的JS插件
+    //yuCSS是一个基于yuJS，采用HTML属性和JS，实现例如布局控制/埋点等功能的JS插件
     var yuCSS={
         //执行全部yuCSS中的设置
-        init:function () {
+        init:function (list) {
+            if(!list || !$$.isArray(list))return;
             this.setSameStyle();
         },
         setSameStyle:function () {
@@ -54,6 +55,28 @@
                         }
                     })();
                 }
+            }
+        },
+        buryingPoint:function (url,name) {
+            if(!url || !name)return;
+            var elemList=$$.nodeDescendant($.body,'['+name+']');
+            for(var i in elemList){
+                var elem=elemList[i];
+                elem.addEventListener('click',function (e) {
+                    //阻止事件冒泡
+                    e = e || window.event;
+                    e.preventDefault();
+                    if(e.stopPropagation) { //W3C阻止冒泡方法
+                        e.stopPropagation();
+                    } else {
+                        e.cancelBubble = true; //IE阻止冒泡方法
+                    }
+                    var dataStr=this.getAttribute(name);
+                    url+=dataStr;
+                    var img=new Image();
+                    img.src=url;
+                },false);
+
             }
         }
     };
