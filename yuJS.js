@@ -376,19 +376,22 @@
                 elem=yuJS.deleteEmptyNode(elem);
                 var childList=elem.childNodes;
                 var total=0;
-                for(var i=0,l=childList.length;i<l;i++){
-                    total+=parseFloat(yuJS.getDomCss(childList[i],'marginTop')) ;
-                    //只取一个存在margin的子元素，之后存在margin如果计算，需要判断是否和当前在同一行，同一行的margin不因计算
-                    if(total>0)return total+'px';
-                }
+                total+=parseFloat(yuJS.getDomCss(childList[0],'marginTop')) ;
+                if(total>0)return total+'px';
+                //一下是遍历所有子元素取第一个有Margin的元素，该方法弃用
+                // for(var i=0,l=childList.length;i<l;i++){
+                //     total+=parseFloat(yuJS.getDomCss(childList[i],'marginTop')) ;
+                //     //只取一个存在margin的子元素，之后存在margin如果计算，需要判断是否和当前在同一行，同一行的margin不因计算
+                //     if(total>0)return total+'px';
+                // }
                 return '0px';
             })();
             if(attObj.height!=undefined){
                 oHeight=getHeight(elem);
-                if(oPaddingT){style.paddingTop='0';}
-                if(oPaddingB){style.paddingBottom='0';}
-                if(oMarginT){style.marginTop=0;}
-                if(oMarginB){style.marginBottom=0;}
+                if(parseFloat(oPaddingT)){style.paddingTop='0';}
+                if(parseFloat(oPaddingB)){style.paddingBottom='0';}
+                if(parseFloat(oMarginT)){style.marginTop=0;}
+                if(parseFloat(oMarginB)){style.marginBottom=0;}
                 style.height = 0+'px';
                 style.overflow='hidden';
             }
@@ -398,20 +401,27 @@
             style.webkitTransition='all '+duration +' '+timing;
             style.oTransition='all '+duration+' '+timing;
             style.mozTransition='all '+duration+' '+timing;
-            style.overflow='hidden';
+            style.overflow='all';
             setTimeout(function () {
                 if(elem.parentNode){
                     elem.parentNode.style.height=parentOH||'auto';
                     elem.parentNode.style.overflow =parentOverflow|| 'visible';
                 }
-                style.paddingTop=oPaddingT;
-                style.paddingBottom=oPaddingB;
-                if(oMarginT){style.marginTop=oMarginT;}
-                if(oMarginB){style.marginBottom=oMarginB;}
-                style.height =parseFloat(oHeight)+parseFloat(sonMarginT)+'px';
+                var totalH=style.height =parseFloat(oHeight)+parseFloat(oPaddingT)+parseFloat(oPaddingB)+'px';
+                if(parseFloat(oPaddingT)){
+                    style.height=parseFloat(style.height)-parseFloat(oPaddingT)+'px';
+                    style.paddingTop=oPaddingT;
+                }
+                if(parseFloat(oPaddingB)){
+                    style.height=parseFloat(style.height)-parseFloat(oPaddingB)+'px';
+                    style.paddingBottom=oPaddingB;
+                }
+                if(parseFloat(oMarginT)){style.marginTop=oMarginT;}
+                if(parseFloat(oMarginB)){style.marginBottom=oMarginB;}
+                //style.height =parseFloat(oHeight)+parseFloat(sonMarginT)+'px';
                 setTimeout(function () {
                     style.height='auto';
-                },parseInt(duration)+50);
+                },parseInt(duration)*1.5-50);
                 setTimeout(function () {
                     yuJS.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'100');
                 },parseInt(duration)/6);
