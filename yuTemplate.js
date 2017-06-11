@@ -74,18 +74,19 @@
                     this.$dom1_2.setAttribute('inBody','true');
                     this.$dom1_1.setAttribute('readonly',(this.allowInput)?'':'readonly');
                     this.$dom1_1.setAttribute('style',
-                        'width:80%;max-width:calc(92% - 30px); height: 100%;position: absolute;left: 5%;margin-left: 4px;background-color: transparent;'
-                            +'-ms-text-overflow: ellipsis;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;'
+                        'width:80%;max-width:calc(92% - 30px); height: calc(100% - 1px);position: absolute;left: 5%;background-color: transparent;'
+                            +'-ms-text-overflow: ellipsis;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;padding-right:20px;'
+                        // +'border-bottom:1px solid #e5e5e5;'
                         +'font-size: '+(this.style.inputFontSize||'14px')+';color:'+(this.style.inputColor||'#333333')
-                        +';border: none;line-height:'+(this.style.inputHeight||'30px')+';'+((this.allowInput)?'':'cursor:pointer;'));
+                        +';line-height:'+(this.style.inputHeight||'30px')+';'+((this.allowInput)?'':'cursor:pointer;'));
                     this.$dom1_1.setAttribute('value',this.v1);
                     this.$dom1_1.setAttribute('placeholder',v2);
                     this.$dom1_2.setAttribute('style','height: 30px;width: 30px;position: absolute;right: 0;top:calc(50% - 15px);background-color: transparent;');
                     this.$dom1_2.setAttribute('onmouseover','this.style.cursor=\'pointer\';');
                     this.$dom1_2_1=this.$dom1_2_1||$.createElement('div');
                     this.$dom1_2_1.setAttribute('first-line','true');
-                    this.$dom1_2_1.setAttribute('style','width: 12px;height: 12px;transform: rotate(-45deg);transform-origin:0% 100%;background-color: transparent;'
-                            +'position:absolute;top:calc(50% - 7px);left:calc(50% - 6px);'
+                    this.$dom1_2_1.setAttribute('style','width: 9px;height: 9px;transform: rotate(-45deg);transform-origin:0% 100%;background-color: transparent;'
+                            +'position:absolute;top:calc(50% - 6px);left:calc(50% - 6px);'
                             +'border-left:1px;border-bottom: 1px;border-style: solid;border-color: #333333;');
 
                     this.$dom1_2_1.setAttribute('inBody','true');
@@ -106,7 +107,7 @@
                 },
                 arrowRotate:function (deg,elem) {
                     deg=parseInt(deg);
-                    deg && $$.rotate(elem||this.$dom1_2_1,{deg:deg});
+                    deg && $$.rotate(elem||this.$dom1_2_1,{deg:deg,origin:(deg<0?'0% 100%':'15% 55%')});
                 },
                 highlight: function(idx) {
                     var self=this;
@@ -119,6 +120,7 @@
                         }
                     })();
                 },
+                //渲染下拉列表
                 renderList: function(list) {
                     var listTpl = '',
                         len = list.length;
@@ -128,7 +130,7 @@
                             $span.setAttribute('name',list[i].id||'null');
                             $span.innerHTML=decodeURI(list[i].des||'');
                             $span.setAttribute('style',
-                                'background-color: transparent; padding-left: 5px;width:auto;height:'+(this.style.listHeight||'25px')
+                                'background-color: transparent; padding-left: 5%;width:auto;height:'+(this.style.listHeight||'25px')
                                 +';line-height: '+(this.style.listHeight||'25px')+';font-size: '+(this.style.listFontSize||'14px')+';'
                                 +'text-align: left;text-overflow: ellipsis;overflow: hidden;color:'+(this.style.listColor||'#808080')+';cursor:pointer;');
                             this.$list.appendChild($span);
@@ -137,15 +139,17 @@
                             opacity:{},
                             height:''
                         },this.duration);
+                        this.$dom1_1.style.borderBottom='1px solid #e5e5e5';
                         this._isListShow=!this._isListShow;
                         this.arrowRotate(135);
                         this.highlight();
                     } else {
                         this.$list.innerHTML=listTpl;
-                        yuJS.hide(this.$list,{
+                        $$.hide(this.$list,{
                             opacity:'',
                             height:''
                         },'300');
+                        this.$dom1_1.style.borderBottom='';
                         self.arrowRotate(-45);
                         self.$input.onblur();
                     }
@@ -173,38 +177,40 @@
                 //input框选中//$input.onclick
                 listenFocus: function() {
                     var self = this;
-                    this.inputTouchend=this.$input.ontouchend=function () {
+                    this.inputTouchend=function () {
                         //已经渲染过则直接展开
-                        console.log(1);
                         if (self._isRended && self.filterDataList.length > 0 && !self._isListShow) {
                             self.highlight(self._seletedIndex);
                             $$.show(self.$list,{
                                 opacity:{},
                                 height:''
                             },self.duration);
+                            self.$dom1_1.style.borderBottom='1px solid #e5e5e5';
                             self._isListShow=!self._isListShow;
                             self.arrowRotate(135);
                             self.highlight();
                             return;
                         }
                         if(self._isListShow){
-                            yuJS.hide(self.$list,{
+                            $$.hide(self.$list,{
                                 opacity:'',
                                 height:''
                             },'300');
                             self.arrowRotate(-45);
+                            self.$dom1_1.style.borderBottom='none';
                             self._isListShow=!self._isListShow;
                             return;
                         }
                         //未渲染则渲染
                         self.search();
                     };
+                    this.$input.addEventListener('touchend',self.inputTouchend,false);
                 },
                 listenBlur: function() {
                     var self = this;
                     this.$input.onblur=function () {
                         //self._isListShow=false;
-                        if (self.filterDataList.length === 0) {
+                        if (self.filterDataList && self.filterDataList.length === 0) {
                             self.$input.value=self.v1;
                             self.keywords = '';
                         } else if (self.$input.value.trim() === '') {
@@ -234,10 +240,11 @@
                             var selectObj = self.filterDataList[self._highlightIndex];
                             self.$input.value=selectObj.name;
                             self.$container.data.value= selectObj.id;
-                            yuJS.hide(self.$list,{
+                            $$.hide(self.$list,{
                                 opacity:'',
                                 height:''
                             },'300');
+                            self.$dom1_1.style.borderBottom='none';
                             self.arrowRotate(-45);
                             self.$input.onblur();
                         } else {
@@ -247,34 +254,10 @@
                 },
                 listenTrigger: function() {
                     var self = this;
-                    this.$trigger.ontouchend=function () {
-                        console.log('trigger');
+                    this.$trigger.addEventListener('touchend',function () {
                         self.inputTouchend();
-
                         return;
-                        //以下是原来的触发展开方式,弃用
-                        // if(!self._isRended){
-                        //     self.search();
-                        //     return;
-                        // }
-                        // if (self._isRended && self.filterDataList.length > 0 && self.$list.style.display==='none') {
-                        //     $$.show(this.$list,{
-                        //         opacity:{},
-                        //         height:''
-                        //     },this.duration);
-                        //     self.highlight();
-                        //     self.arrowRotate(135);
-                        // }
-                        // else {
-                        //
-                        //     yuJS.hide(self.$list,{
-                        //         opacity:'',
-                        //         height:''
-                        //     },'300');
-                        //     self.arrowRotate(-45);
-                        //     self.$input.onblur();
-                        // }
-                    };
+                    },false);
                 },
                 listenSelect: function() {
                     var self = this;
@@ -288,6 +271,7 @@
                             opacity:'',
                             height:''
                         },'300');
+                        self.$dom1_1.style.borderBottom='none';
                         self.arrowRotate(-45);
                         self.$container.data.id= id;
                         self._highlightIndex= self._seletedIndex=yuJS.childIndex($this);
@@ -307,7 +291,6 @@
                         }
                         else{
                             if(!self._isListShow && $$.screenWidth()>767){
-                                console.log('onmouseover');
                                 self.inputTouchend();
 
                             }
@@ -328,7 +311,7 @@
                         var hasAncestor=(function () {
                             var $parent;
                             if(toElemet==self.$container)return true;
-                            $parent=toElemet.parentNode;
+                            $parent=(toElemet && toElemet.parentNode)||null;
                             while($parent){
                                 if($parent==self.$container)return true;
                                 $parent=$parent.parentNode;
@@ -341,7 +324,6 @@
                             return;
                         }
                         if(self._isListShow){
-                            console.log('onmouseout');
                             self.inputTouchend();
 
                         }
@@ -374,16 +356,20 @@
                     var self=this;
                     var listener=document.addEventListener||null;
                     var moveFun=function () {
-                        yuJS.hide(self.$list,{
+                        $$.hide(self.$list,{
                             opacity:'',
                             height:''
                         },'300');
+                        self.$dom1_1.style.borderBottom='none';
                         self.$input.blur();
                     }
+
                     if(listener){
-                        listener('DOMMouseScroll',moveFun,false);
+                        //FireFox
+                        if(!document.onmousewheel)listener('DOMMouseScroll',moveFun,false);
                         listener('touchmove',moveFun,false);
                     }
+                    //非firefox兼容并赋给全局
                     g.onmousewheel=document.onmousewheel=moveFun;
                 },
                 //更改样式接口
@@ -413,7 +399,7 @@
                     //设置消息体
                     self.msgDIV =$.createElement('div');
                     self.msgDIV.setAttribute('id','toastMessage');
-                    self.msgDIV.setAttribute('style',
+                    self.msgDIV.setAttribute('style','background-color:transparent;'+
                         'position:fixed;top:50%;z-index:999;width: 100%;text-align:center;color:white;font-size:18px;border-radius:2px;');
                     self.msgDIV.innerHTML='<div  style="background-color: black;display:inline-block;padding:10px;">'
                         +'<span style="color:white" >    '+this.message +  '</span>'
