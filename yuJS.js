@@ -21,6 +21,7 @@
     //addTransition元素添加transition属性
     //rotate旋转元素
     //show 使用css3 transition实现展开动作
+    //showN是对show做了改进
     //hide 使用css3 transition实现收缩动作
     //fadein元素淡入淡出
     //fadeout元素淡入淡出
@@ -425,6 +426,67 @@
                 setTimeout(function () {
                     yuJS.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'100');
                 },parseInt(duration)/6);
+            },-1);
+        },
+        showN:function (elem,attObj,timingStyle) {
+            if(!elem||!attObj)return;
+            elem.style.visibility='visible';
+            if($$.getDomCss(elem,'display'))elem.style.display='block';
+            var style=elem.style;
+            if(attObj.opacity!=undefined){
+                // yuJS.addTransition(style);
+                style.transition='' ;
+                style.webkitTransition='';
+                style.oTransition='';
+                style.mozTransition='';
+                if (style.opacity != undefined) {
+                    style.opacity = 0;
+                } else {
+                    style.filter = "alpha(opacity=0)";
+                }
+            }
+            timingStyle=timingStyle||'ease-in-out';
+            var getHeight=function (ele) {
+                //boder-box下计算高度content+padding+border
+                var  h = yuJS.getDomCss(ele,'height').replace('px','');
+                var getSonHTotal=function (father) {
+                    var height=0;
+                    var childNodesList=father.childNodes;
+                    if(!childNodesList)return 0;
+                    for(var i=0;i<childNodesList.length;i++){
+                        var $this=childNodesList[i];
+                        var thisH=getHeight($this);
+                        height+=parseFloat(thisH);
+                    }
+                    return height;
+                };
+                h=parseFloat(h);
+                if(!h){
+                    h=getSonHTotal(ele);
+                }
+                return h;
+            };
+            var isNum=typeof(timingStyle)==='number';
+            var isNumStr=parseInt(timingStyle)>0;
+            var oHeight;
+            if(attObj.height!=undefined){
+                oHeight=getHeight(elem);
+                style.height = 0+'px';
+                style.overflow='hidden';
+            }
+            var duration=isNum?timingStyle+'ms':isNumStr?parseInt(timingStyle)+'ms':'300ms';
+            var timing=(!isNum && !isNumStr && (timingStyle==='linear'||timingStyle.match('ease')))?timingStyle:'ease-in-out';
+            style.transition='height '+duration +' '+timing ;
+            style.webkitTransition='height '+duration +' '+timing;
+            style.oTransition='height '+duration+' '+timing;
+            style.mozTransition='height '+duration+' '+timing;
+            setTimeout(function () {
+                if(attObj.height!=undefined){
+                    style.height =parseFloat(oHeight)+'px';
+                }
+                if(attObj.opacity!=undefined){
+                    yuJS.setOpacity(elem, attObj.opacity.end||'100');
+                }
             },-1);
         },
         hide:function (elem,attObj,timingStyle) {
