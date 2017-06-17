@@ -21,7 +21,6 @@
     //addTransition元素添加transition属性
     //rotate旋转元素
     //show 使用css3 transition实现展开动作
-    //showN是对show做了改进
     //hide 使用css3 transition实现收缩动作
     //fadein元素淡入淡出
     //fadeout元素淡入淡出
@@ -35,9 +34,10 @@
     //setCookie添加cookie，默认有效期365天
     //delCookie删除coolie
     //isArray 是否是数组
+    //getBrowser判断当前浏览器
     var yuJS={
         jsonParse : g.JSON && JSON.parse ? JSON.parse : eval,
-     /////////////////////////////////////////////////////////////页面样式,页面运算相关
+        /////////////////////////////////////////////////////////////页面样式,页面运算相关
         domReady:function(funList){
             var isReady=false;
             var readyList= [].concat(funList);
@@ -53,7 +53,7 @@
 
             var bindReady = function(evt)
             {
-                if(isReady) return;
+                if(isReady) {return;}
                 isReady=true;
                 onDOMReady.call(g);
                 if($.removeEventListener)
@@ -78,10 +78,12 @@
             {
                 $.attachEvent("onreadystatechange", function(){
                     if((/loaded|complete/).test($.readyState))
+                    {
                         bindReady();
+                    }
                 });
 
-                if(g == g.top)
+                if(g === g.top)
                 {
                     timer = setInterval(function(){
                         try
@@ -112,7 +114,7 @@
             this.actualPx =  this.screenWidth(dom)*unitMatrix / UIWidth;
             dom.documentElement.style.fontSize = this.actualPx + "px";
         },
-     ////////////////////////////////////////////////////////////////////元素节点的运算
+        ////////////////////////////////////////////////////////////////////元素节点的运算
         deleteEmptyNode:function (elem){
             var newElem=elem;
             var elem_child = newElem.childNodes;
@@ -126,7 +128,7 @@
         },
         appendChilds:function (father,sonList) {
             var list=sonList||[];
-            for(var i in list){0
+            for(var i in list){
                 father.appendChild(list[i]);
             }
         },
@@ -207,6 +209,15 @@
                     }
                     if(matchNodes[0])return matchNodes;
                     break;
+                case'<':
+                    for(var i=0,l=arr.length;i<l;i++){
+                        var nodeName=arr[i].nodeName;
+                        if(nodeName.toLowerCase()==(selector.substr(1,selector.length-2)).toLowerCase()){
+                            matchNodes.push(arr[i]);
+                        }
+                    }
+                    if(matchNodes[0])return matchNodes;
+                    break;
                 default:break;
             }
         },
@@ -219,7 +230,7 @@
             }
             return index;
         },
-     /////////////////////////////////////////////////////////////////////元素样式操作
+        /////////////////////////////////////////////////////////////////////元素样式操作
         addClass:function (ele,newClass) {
             if(ele.className.match(newClass))return;
             ele.className+=(" "+newClass);
@@ -230,7 +241,7 @@
             ele.className = ele.className.replace(reg, ' ');
         },
         getDomCss:function(elem,name){
-            if(elem.nodeName=='#text')return '0';
+            if(!elem || (elem && elem.nodeName=='#text'))return '0';
             if(elem.currentStyle) {
                 return elem.currentStyle[name];
             }
@@ -300,6 +311,8 @@
         //       height:''/'const'
         //     },timingStyle)
         show:function (elem,attObj,timingStyle) {
+            yuJS.showN(elem,attObj,timingStyle);
+            return;
             if(!elem)return;
             var style=elem.style;
             var parentOH='';
@@ -310,7 +323,7 @@
             }
             if(!attObj)return;
             if(attObj.opacity!=undefined){
-               // yuJS.addTransition(style);
+                // yuJS.addTransition(style);
                 style.transition='' ;
                 style.webkitTransition='';
                 style.oTransition='';
@@ -321,41 +334,42 @@
                     style.filter = "alpha(opacity=0)";
                 }
             }
-            timingStyle=timingStyle||'ease';
+            timingStyle=timingStyle||'ease-in-out';
             var getHeight=function (ele) {
-                    var  h = yuJS.getDomCss(ele,'height').replace('px','');
-                    var getSonHTotal=function (father) {
-                        var height=0;
-                        var childNodesList=father.childNodes;
-                        if(!childNodesList)return false;
-                        for(var i=0;i<childNodesList.length;i++){
-                            var $this=childNodesList[i];
-                            var getCSS=yuJS.getDomCss;
-                            var tempH=getCSS($this,'height');
-                            var thisChildH=getCSS($this,'display')=='none'?0:
-                                ((getCSS($this,'float')=='left'||getCSS($this,'float')=='right') && i!=0?0:
-                                    tempH=='auto'?'auto': parseFloat(tempH.replace('px','')));
-                            if(thisChildH=='auto'||(!thisChildH && thisChildH!=0)){
-                                thisChildH=getCSS($this,'offsetHeight');
-                                if(thisChildH=='0'||thisChildH=='auto'||thisChildH==0){
-                                    var newSon=getSonHTotal(childNodesList[i]);
-                                    if(newSon)thisChildH=newSon;
-                                    else{
-                                        if(!thisChildH && thisChildH!=0)thisChildH=0;
-                                        var minH=parseFloat(yuJS.getDomCss(childNodesList[i],'minHeight').replace('px',''));
-                                        if(minH)thisChildH=minH;
-                                    }
+                var  h = yuJS.getDomCss(ele,'height').replace('px','');
+                var getSonHTotal=function (father) {
+                    var height=0;
+                    var childNodesList=father.childNodes;
+                    if(!childNodesList)return false;
+                    for(var i=0;i<childNodesList.length;i++){
+                        var $this=childNodesList[i];
+                        var getCSS=yuJS.getDomCss;
+                        var tempH=getCSS($this,'height');
+                        var thisChildH=getCSS($this,'display')=='none'?0:
+                            ((getCSS($this,'float')=='left'||getCSS($this,'float')=='right') && i!=0?0:
+                                tempH=='auto'?'auto': parseFloat(tempH.replace('px','')));
+                        if(thisChildH=='auto'||(!thisChildH && thisChildH!=0)){
+                            thisChildH=getCSS($this,'offsetHeight');
+                            if(thisChildH=='0'||thisChildH=='auto'||thisChildH==0){
+                                var newSon=getSonHTotal(childNodesList[i]);
+                                if(newSon)thisChildH=newSon;
+                                else{
+                                    if(!thisChildH && thisChildH!=0)thisChildH=0;
+                                    var minH=parseFloat(yuJS.getDomCss(childNodesList[i],'minHeight').replace('px',''));
+                                    if(minH)thisChildH=minH;
                                 }
                             }
-                            height+=thisChildH;
                         }
-                        return height;
-                    };
-                    if(h=='auto'||h==0){
-                        h=getSonHTotal(ele);
+                        height+=parseFloat(thisChildH);
+
                     }
-                    return h;
+                    return height;
                 };
+                if(h=='auto'||h==0){
+                    h=getSonHTotal(ele);
+                }
+                return h;
+            };
             var isNum=typeof(timingStyle)==='number';
             var isNumStr=parseInt(timingStyle)>0;
             if(elem.parentNode){
@@ -408,33 +422,54 @@
                     elem.parentNode.style.height=parentOH||'auto';
                     elem.parentNode.style.overflow =parentOverflow|| 'visible';
                 }
-                var totalH=style.height =parseFloat(oHeight)+parseFloat(oPaddingT)+parseFloat(oPaddingB)+'px';
-                if(parseFloat(oPaddingT)){
-                    style.height=parseFloat(style.height)-parseFloat(oPaddingT)+'px';
-                    style.paddingTop=oPaddingT;
-                }
-                if(parseFloat(oPaddingB)){
-                    style.height=parseFloat(style.height)-parseFloat(oPaddingB)+'px';
-                    style.paddingBottom=oPaddingB;
-                }
+                //先设置高度为总高度，包含margin ;padding;这样可以使得展开动效一次到位
+                var totalH=style.height =parseFloat(oHeight)+parseFloat(sonMarginT)+'px';
+                yuJS.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'100');
+                //一次加入pading同时height减去padding值，保持高度不变，这样整体动效正负相消，变化微弱
+                setTimeout(function () {
+                    if(parseFloat(oPaddingT)){
+                        style.paddingTop=oPaddingT;
+                    }
+                    if(parseFloat(oPaddingB)){
+                        style.paddingBottom=oPaddingB;
+                    }
+                },parseInt(duration));
+                // if(parseFloat(oPaddingT)){
+                //     setTimeout(function () {
+                //         style.paddingTop=oPaddingT;
+                //     },parseInt(duration)/2);
+                // }
+                // if(parseFloat(oPaddingB)){
+                //     setTimeout(function () {
+                //         style.paddingBottom=oPaddingB;
+                //     },parseInt(duration));
+                //
+                // }
                 if(parseFloat(oMarginT)){style.marginTop=oMarginT;}
                 if(parseFloat(oMarginB)){style.marginBottom=oMarginB;}
-                //style.height =parseFloat(oHeight)+parseFloat(sonMarginT)+'px';
-                setTimeout(function () {
-                    style.height='auto';
-                },parseInt(duration)*1.5-50);
+                // style.height =parseFloat(oHeight)+parseFloat(sonMarginT)+'px';
+                if(!attObj.notHeightAuto){
+                    setTimeout(function () {
+                        style.height='auto';
+                    },parseInt(duration)+500);
+                }
                 setTimeout(function () {
                     yuJS.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'100');
-                },parseInt(duration)/6);
+                },parseInt(duration)/10);
             },-1);
         },
         showN:function (elem,attObj,timingStyle) {
             if(!elem||!attObj)return;
+            var browser=yuJS.getBrowser();
+            if(!browser||browser=='IE'){
+                elem.style.visibility = 'visible';
+                elem.style.display = 'block';
+                return;
+            }
             elem.style.visibility='visible';
             if($$.getDomCss(elem,'display'))elem.style.display='block';
             var style=elem.style;
             if(attObj.opacity!=undefined){
-                // yuJS.addTransition(style);
                 style.transition='' ;
                 style.webkitTransition='';
                 style.oTransition='';
@@ -451,7 +486,7 @@
                 var  h = yuJS.getDomCss(ele,'height').replace('px','');
                 var getSonHTotal=function (father) {
                     var height=0;
-                    var childNodesList=father.childNodes;
+                    var childNodesList=yuJS.deleteEmptyNode(father).childNodes;
                     if(!childNodesList)return 0;
                     for(var i=0;i<childNodesList.length;i++){
                         var $this=childNodesList[i];
@@ -472,7 +507,7 @@
             if(attObj.height!=undefined){
                 oHeight=getHeight(elem);
                 style.height = 0+'px';
-                style.overflow='hidden';
+                style.overflow ='hidden';
             }
             var duration=isNum?timingStyle+'ms':isNumStr?parseInt(timingStyle)+'ms':'300ms';
             var timing=(!isNum && !isNumStr && (timingStyle==='linear'||timingStyle.match('ease')))?timingStyle:'ease-in-out';
@@ -488,8 +523,14 @@
                     yuJS.setOpacity(elem, attObj.opacity.end||'100');
                 }
             },-1);
+            setTimeout(function () {
+                if(attObj.height!=undefined&&!attObj.notHeightAuto){
+                    style.height ='auto';
+                }
+            },parseInt(duration));
         },
         hide:function (elem,attObj,timingStyle) {
+            yuJS.hideN(elem,attObj,timingStyle);
             if(!elem)return;
             var style=elem.style;
             var parentOH='';
@@ -543,6 +584,39 @@
                 },parseInt(duration));
             },-1);
         },
+        hideN:function (elem,attObj,timingStyle) {
+            if(!elem ||!attObj)return;
+            var style=elem.style;
+            timingStyle=timingStyle||'ease-in-out';
+            if(attObj.opacity!=undefined){
+                if (style.opacity != undefined) {
+                    style.opacity = 1;
+                } else {
+                    style.filter = "alpha(opacity=100)";
+                }
+            }
+            var isNum=typeof(timingStyle)==='number';
+            var isNumStr=parseInt(timingStyle)>0;
+            var oHeight;
+            if(attObj.height!=undefined){
+                oHeight=this.getDomCss(elem,'height').replace('px','');
+                if(oHeight)style.height=oHeight+'px';
+            }
+            var duration=isNum?timingStyle+'ms':isNumStr?parseInt(timingStyle)+'ms':'300ms';
+            var timing=(!isNum && !isNumStr && (timingStyle==='linear'||timingStyle.match('ease')))?timingStyle:'ease-in-out';
+            style.transition='height '+duration +' '+timing ;
+            style.webkitTransition='height '+duration +' '+timing;
+            style.oTransition='height '+duration+' '+timing;
+            style.mozTransition='height '+duration+' '+timing;
+            style.overflow='hidden';
+            style.visibility='hidden';
+            setTimeout(function () {
+                if(attObj.height!=undefined){
+                    style.height ='0px';
+                }
+                yuJS.setOpacity(elem,'0');
+            },-1);
+        },
         fadein:function(ele, opacity, time,funBack) {
             if (ele) {
                 var v  = ele.style.filter.replace("alpha(opacity=", "").replace(")", "") || ele.style.opacity;
@@ -583,13 +657,19 @@
                 }, time/Math.floor((oldV-opacity)/count));
             }
         },
-     ////////////////////////////////////////////////////////////////////其他公共方法
+        ////////////////////////////////////////////////////////////////////其他公共方法
         ajax$:function ajax(opt) {
             opt = opt || {};
             opt.method = opt.method.toUpperCase() || 'POST';
             opt.url = opt.url || '';
             opt.async = opt.async || true;
             opt.data = opt.data || null;
+            if(opt.data){
+                for(var i in opt.data){
+                    if(i=='length')break;
+                    opt.data[i]=encodeURIComponent(opt.data[i]);
+                }
+            }
             opt.success = opt.success || function () {};
             var xmlHttp = null;
             if (XMLHttpRequest) {
@@ -644,7 +724,8 @@
                 return result;
             }
         },
-        //@param obj parse//parse.$box监听元素//parse.dir XY方向//parse.posType移动元素相关参数//parse.pre是否阻止其他事件
+        //@param obj parse
+        //@param obj parse.$box监听元素//parse.dir XY方向//parse.posType移动元素相关参数//parse.pre是否阻止其他事件
         //@param obj  parse.posType【posType.type=='01'表示first-child;  posType.maxX 水平最大移动值 ; posType.minX 水平最小移动值 】
         //v0.1 只支持marginLeft作为参数来移动元素.后期拓展
         scroll:function (parse) {
@@ -655,10 +736,10 @@
             var step=null;
             //touchXS:X方向touch的开始位置;touchY：Y方向...
             var touchXS,touchYS,touchXE,touchYE,moveX,moveY,startTime,endTime,moveTime,speedX,$pos;
-            //禁用滑动区域touchmove事件以备重新定义
-            parse.prevent && parse.$box.addEventListener('touchmove',function () {
+            //将阻止默认行为的方法放在函数中调用。以便接触阻止。
+            var preventDefaultFun=function () {
                 event.preventDefault();
-            },false);
+            };
             //根据各参数做相应移动
             //elem 移动区域; posObj 移动元素相关参数,sx X方向移动速度,mx X方向移动距离,sy SPEED_Y,my MOVE_Y
             var moveChooseEle=function (elem,posObj,sx,mx,sy,my) {
@@ -679,12 +760,14 @@
                     }
                     if(sx && !sy){
                         //sx低于0.5则实际滑动多少是多少，大于3则滑动到最后
+                        var minValve=0.4,
+                            maxValve=1;
                         var absSx=Math.abs(sx);
-                        absSx=absSx>3?3:absSx<0.5?0.5:absSx;
+                        absSx=absSx>maxValve?maxValve:absSx<minValve?minValve:absSx;
                         //可以滑动的最大距离
                         var range=obj.maxX-obj.minX;
                         //当前移动的距离
-                        var changeMargin=absSx<=0.5?mx:absSx<=3?range*sx/3:sx*range/absSx;
+                        var changeMargin=absSx==minValve?mx:absSx<maxValve?range*sx/maxValve:sx*range/absSx;
                         //alert(changeMargin+'######'+range+'='+obj.maxX+'-'+obj.minX);
                         var process=function (style,change,oldM) {
                             if(!step)step=change/frequency;
@@ -693,7 +776,7 @@
                             //oldMargin取数值部分
                             oldMargin=parseFloat(oldMargin);
                             var newMargin=oldMargin+change;
-                            yuJS.addTransition(style,'all','500ms','ease-in-out');
+                            yuJS.addTransition(style,'all','400ms','ease-in-out');
                             if(newMargin<obj.minX){style.marginLeft=obj.minX+unit;return;}
                             if(newMargin>obj.maxX){style.marginLeft=obj.maxX+unit;return;}
                             style.marginLeft=newMargin+unit;
@@ -725,9 +808,14 @@
             //根据X方向计算整个滑动，directionX是计算方法的入口函数
             var directionX=function(){
                 //x方向计算依赖X方向起始和结束位置，没有则退出
-                if(!touchXS || !touchXE)return;
+                if(!touchXS || !touchXE ||touchXS===touchXE)return;
                 //移动距离
                 moveX=touchXE-touchXS;
+                //判断Y方向移动幅度，如果Y方向幅度更大，则认为用户意图是Y方向移动
+                moveY=touchYE-touchYS;
+                if(Math.abs(moveY)/Math.abs(moveX)>2)return;
+                //禁止元素默认行为
+                parse.$box.addEventListener('touchmove',preventDefaultFun,false);
                 //移动时间
                 moveTime=endTime-startTime;
                 //移动速度
@@ -746,6 +834,19 @@
                 touchXS=targetTouch.clientX;
                 touchYS=targetTouch.clientY;
             },false);
+            parse.$box.addEventListener('touchmove',function(e){
+                //获取滑动屏幕时的X,Y
+                var movingX = e.targetTouches[0].clientX,
+                    movingY = e.targetTouches[0].clientY,
+                //获取滑动距离
+                distanceX = movingX-touchXS,
+                distanceY = movingY-touchYS;
+                //判断滑动方向
+                if(Math.abs(distanceX)<Math.abs(distanceY) || Math.abs(distanceX)<Math.abs(distanceY)){
+                    //取消阻止默认行为
+                    parse.$box.removeEventListener('touchmove',preventDefaultFun,false);
+                }
+            });
             parse.$box.addEventListener('touchend',function (e) {
                 var changedTouche=e.changedTouches;
                 if(changedTouche.length<=0)return;
@@ -806,6 +907,35 @@
                     guid += "-";
             }
             return guid;
+        },
+        getBrowser:function () {
+            var ua=navigator.userAgent.toLowerCase();
+            var OsObject = "";
+            if(ua.indexOf("chrome")>=0) {
+                console.log('chrome');
+                return "Chrome";
+            }
+            if(ua.indexOf("firefox")>=0){
+                console.log('Firefox');
+                return "Firefox";
+            }
+            if(ua.indexOf("msie")>=0) {
+                console.log('ie');
+                return "IE";
+            }
+            if(ua.indexOf("Safari")>=0) {
+                console.log('Safari');
+                return "Safari";
+            }
+            if(ua.indexOf("Camino")>=0){
+                console.log('Camino');
+                return "Camino";
+            }
+            if(ua.indexOf("Gecko/")>=0){
+                console.log('Gecko');
+                return "Gecko";
+            }
+            else return false;
         }
     };
     g.$$=g.yuJS=g.commonFun=yuJS;
