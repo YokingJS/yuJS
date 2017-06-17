@@ -63,18 +63,31 @@
             for(var i in elemList){
                 var elem=elemList[i];
                 elem.addEventListener('click',function (e) {
+                    var newUrl=url;
                     //阻止事件冒泡
                     e = e || window.event;
-                    e.preventDefault();
+                    //e.preventDefault();
                     if(e.stopPropagation) { //W3C阻止冒泡方法
                         e.stopPropagation();
                     } else {
                         e.cancelBubble = true; //IE阻止冒泡方法
                     }
-                    var dataStr=this.getAttribute(name);
-                    url+=dataStr;
-                    var img=new Image();
-                    img.src=url;
+                    //对查询字段的值进行编码
+                    var fields = this.getAttribute(name).split('&'),
+                        dataStr, item, key, value;
+                    for (var i = 0; i < fields.length; i++) {
+                        item = fields[i].split('=');
+                        key = item[0];
+                        value = item.slice(1).join('=');
+                        if (!key) {
+                            fields[i] = '';
+                        } else {
+                            fields[i] = key + '=' + encodeURIComponent(value);
+                        }
+                    }
+                    dataStr = fields.join('&');
+                    newUrl += (dataStr.charAt(0) == '&' ? dataStr : '&' + dataStr);
+                    new Image().src = newUrl;
                 },false);
 
             }
