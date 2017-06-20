@@ -35,6 +35,7 @@
     //delCookie删除coolie
     //isArray 是否是数组
     //getBrowser判断当前浏览器
+    //compatibilityEvent事件的浏览器兼容
     var yuJS={
         jsonParse : g.JSON && JSON.parse ? JSON.parse : eval,
         /////////////////////////////////////////////////////////////页面样式,页面运算相关
@@ -464,16 +465,15 @@
             if(!browser||browser=='IE'){
                 elem.style.visibility = 'visible';
                 elem.style.display = 'block';
+                elem.style.height='auto';
                 return;
             }
-            elem.style.visibility='visible';
-            if($$.getDomCss(elem,'display'))elem.style.display='block';
             var style=elem.style;
             if(attObj.opacity!=undefined){
-                style.transition='' ;
-                style.webkitTransition='';
-                style.oTransition='';
-                style.mozTransition='';
+                style.transition='all 0 ease 0' ;
+                style.webkitTransition='all 0 ease 0';
+                style.oTransition='all 0 ease 0';
+                style.mozTransition='all 0 ease 0';
                 if (style.opacity != undefined) {
                     style.opacity = 0;
                 } else {
@@ -486,6 +486,7 @@
                 var  h = yuJS.getDomCss(ele,'height').replace('px','');
                 var getSonHTotal=function (father) {
                     var height=0;
+                    if(!father.childNodes || father.childNodes.length<=1)return 0;
                     var childNodesList=yuJS.deleteEmptyNode(father).childNodes;
                     if(!childNodesList)return 0;
                     for(var i=0;i<childNodesList.length;i++){
@@ -504,20 +505,40 @@
             var isNum=typeof(timingStyle)==='number';
             var isNumStr=parseInt(timingStyle)>0;
             var oHeight;
-            if(attObj.height!=undefined){
-                oHeight=getHeight(elem);
-                style.height = 0+'px';
-                style.overflow ='hidden';
+            var oPaddingT=this.getDomCss(elem,'paddingTop');
+            var oPaddingB=this.getDomCss(elem,'paddingBottom');
+            //先将height&padding设为0，否则visibility&display设置后元素会处于打开状态
+            //此处需要注意如果元素高度是通过style设置的，应当先将该高度（原高度）记录
+            oHeight=style.height;
+            //将oHeight换算为px
+            if(parseFloat(oHeight)){
+                if(oHeight.match('em')){
+                    oHeight=parseFloat(oHeight)*$$.actualPx+'px';
+                }
             }
+            style.height = 0+'px';
+            style.overflow ='hidden';
+            if(parseFloat(oPaddingT)){style.paddingTop='0';}
+            if(parseFloat(oPaddingB)){style.paddingBottom='0';}
+            //visibility='visible'以方便取高度
+            elem.style.visibility='visible';
+            if($$.getDomCss(elem,'display'))elem.style.display='block';
+            if(attObj.height!=undefined && !parseFloat(oHeight)){
+                //特殊情况计算的高度应该不包含padding（设置padding时元素会继续变化），此时有notAddPadding。其他时候height包含padding（padding设置不会导致元素高度变化）(跟盒子模型有关)
+                oHeight=getHeight(elem)+(attObj.notAddPadding?0:(parseFloat(oPaddingT)?parseFloat(oPaddingT):0)+(parseFloat(oPaddingB)?parseFloat(oPaddingB):0));
+            }
+
             var duration=isNum?timingStyle+'ms':isNumStr?parseInt(timingStyle)+'ms':'300ms';
             var timing=(!isNum && !isNumStr && (timingStyle==='linear'||timingStyle.match('ease')))?timingStyle:'ease-in-out';
-            style.transition='height '+duration +' '+timing ;
-            style.webkitTransition='height '+duration +' '+timing;
-            style.oTransition='height '+duration+' '+timing;
-            style.mozTransition='height '+duration+' '+timing;
+            style.transition='all  '+duration +' '+timing ;
+            style.webkitTransition='all '+duration +' '+timing;
+            style.oTransition='all '+duration+' '+timing;
+            style.mozTransition='all '+duration+' '+timing;
             setTimeout(function () {
                 if(attObj.height!=undefined){
                     style.height =parseFloat(oHeight)+'px';
+                    if(parseFloat(oPaddingT)){style.paddingTop=oPaddingT;}
+                    if(parseFloat(oPaddingB)){style.paddingBottom=oPaddingB;}
                 }
                 if(attObj.opacity!=undefined){
                     yuJS.setOpacity(elem, attObj.opacity.end||'100');
@@ -527,24 +548,21 @@
                 if(attObj.height!=undefined&&!attObj.notHeightAuto){
                     style.height ='auto';
                 }
-            },parseInt(duration));
+            },parseInt(duration)*1.2);
         },
         hide:function (elem,attObj,timingStyle) {
-            yuJS.hideN(elem,attObj,timingStyle);
             if(!elem)return;
             var style=elem.style;
-            var parentOH='';
-            var parentOverflow='';
             if (elem && !timingStyle ) {
                 style.display = 'none';
                 return;
             }
             if(!attObj)return;
             if(attObj.opacity!=undefined){
-                style.transition='' ;
-                style.webkitTransition='';
-                style.oTransition='';
-                style.mozTransition='';
+                style.transition='all 0 ease 0' ;
+                style.webkitTransition='all 0 ease 0';
+                style.oTransition='all 0 ease 0';
+                style.mozTransition='all 0 ease 0';
                 if (style.opacity != undefined) {
                     style.opacity = 1;
                 } else {
@@ -570,6 +588,7 @@
             style.oTransition='all '+duration+' '+timing;
             style.mozTransition='all '+duration+' '+timing;
             style.overflow='hidden';
+            style.visibility='hidden';
             setTimeout(function () {
                 style.paddingTop='0px';
                 style.paddingBottom='0px';
@@ -579,12 +598,13 @@
                     style.display='none';
                     style.paddingTop=oPaddingT;
                     style.paddingBottom=oPaddingB;
-                    style.height =oHeight;
+                    style.height =oHeight+'px';
                     yuJS.setOpacity(elem,'100');
                 },parseInt(duration));
             },-1);
         },
         hideN:function (elem,attObj,timingStyle) {
+            yuJS.hide(elem,attObj,timingStyle);return;
             if(!elem ||!attObj)return;
             var style=elem.style;
             timingStyle=timingStyle||'ease-in-out';
@@ -604,17 +624,22 @@
             }
             var duration=isNum?timingStyle+'ms':isNumStr?parseInt(timingStyle)+'ms':'300ms';
             var timing=(!isNum && !isNumStr && (timingStyle==='linear'||timingStyle.match('ease')))?timingStyle:'ease-in-out';
-            style.transition='height '+duration +' '+timing ;
-            style.webkitTransition='height '+duration +' '+timing;
-            style.oTransition='height '+duration+' '+timing;
-            style.mozTransition='height '+duration+' '+timing;
+            style.transition='all '+duration +' '+timing ;
+            style.webkitTransition='all '+duration +' '+timing;
+            style.oTransition='all '+duration+' '+timing;
+            style.mozTransition='all '+duration+' '+timing;
             style.overflow='hidden';
             style.visibility='hidden';
             setTimeout(function () {
                 if(attObj.height!=undefined){
                     style.height ='0px';
+                    setTimeout(function () {
+                        style.display='none';
+                        style.height =oHeight;
+                        yuJS.setOpacity(elem,'100');
+                    },parseInt(duration));
                 }
-                yuJS.setOpacity(elem,'0');
+                yuJS.setOpacity(elem,attObj && attObj.opacity && attObj.opacity.end||'0');
             },-1);
         },
         fadein:function(ele, opacity, time,funBack) {
@@ -756,7 +781,6 @@
                     if(unit=='rem'||unit=='em'){
                         //rem或者em需要计算比例，转mx(mx以px为单位需要转为rem/em为单位)
                         mx=mx/$$.actualPx;
-                        //alert(mx);
                     }
                     if(sx && !sy){
                         //sx低于0.5则实际滑动多少是多少，大于3则滑动到最后
@@ -768,7 +792,6 @@
                         var range=obj.maxX-obj.minX;
                         //当前移动的距离
                         var changeMargin=absSx==minValve?mx:absSx<maxValve?range*sx/maxValve:sx*range/absSx;
-                        //alert(changeMargin+'######'+range+'='+obj.maxX+'-'+obj.minX);
                         var process=function (style,change,oldM) {
                             if(!step)step=change/frequency;
                             //原来的margin值
@@ -776,7 +799,7 @@
                             //oldMargin取数值部分
                             oldMargin=parseFloat(oldMargin);
                             var newMargin=oldMargin+change;
-                            yuJS.addTransition(style,'all','400ms','ease-in-out');
+                            yuJS.addTransition(style,'all','250ms','ease-in-out');
                             if(newMargin<obj.minX){style.marginLeft=obj.minX+unit;return;}
                             if(newMargin>obj.maxX){style.marginLeft=obj.maxX+unit;return;}
                             style.marginLeft=newMargin+unit;
@@ -838,9 +861,9 @@
                 //获取滑动屏幕时的X,Y
                 var movingX = e.targetTouches[0].clientX,
                     movingY = e.targetTouches[0].clientY,
-                //获取滑动距离
-                distanceX = movingX-touchXS,
-                distanceY = movingY-touchYS;
+                    //获取滑动距离
+                    distanceX = movingX-touchXS,
+                    distanceY = movingY-touchYS;
                 //判断滑动方向
                 if(Math.abs(distanceX)<Math.abs(distanceY) || Math.abs(distanceX)<Math.abs(distanceY)){
                     //取消阻止默认行为
@@ -874,8 +897,8 @@
         isArray:function (obj) {
             return Object.prototype.toString.call(obj) === '[object Array]';
         },
-        setCookie:function (name, value) {
-            var Days = 365;
+        setCookie:function (name, value,days) {
+            var Days = days||365;
             var minutes = 60;
             var exp = new Date();
             exp.setTime(exp.getTime() + Days * 24 * 60 * 60 * 1000);
@@ -910,32 +933,53 @@
         },
         getBrowser:function () {
             var ua=navigator.userAgent.toLowerCase();
-            var OsObject = "";
+            if(ua.indexOf("android")>=0) {
+                return "android";
+            }
+            if(ua.indexOf("iphone")>=0) {
+                return "iphone";
+            }
+            if(ua.match(/.*mac.*os/ig)) {
+                return "mac";
+            }
             if(ua.indexOf("chrome")>=0) {
-                console.log('chrome');
-                return "Chrome";
+                return "chrome";
             }
             if(ua.indexOf("firefox")>=0){
-                console.log('Firefox');
-                return "Firefox";
+                return "firefox";
             }
             if(ua.indexOf("msie")>=0) {
-                console.log('ie');
+                if(ua.match(/.*msie.*10\.0/ig)){
+                    return "IE10";
+                }
                 return "IE";
             }
             if(ua.indexOf("Safari")>=0) {
-                console.log('Safari');
-                return "Safari";
+                return "safari";
             }
             if(ua.indexOf("Camino")>=0){
-                console.log('Camino');
-                return "Camino";
+                return "camino";
             }
             if(ua.indexOf("Gecko/")>=0){
-                console.log('Gecko');
-                return "Gecko";
+                return "gecko";
             }
-            else return false;
+            else {
+                return false;
+            }
+        },
+        compatibilityEvent:function (elem,e,fun,bubbly) {
+            if(!e || (elem && typeof(elem)!=='object'))return;
+            elem=elem||document.body;
+            bubbly=bubbly||false;
+            var browser=yuJS.getBrowser();
+            //IE9-
+            if(browser==='IE'){
+                elem.attachEvent('on'+e,fun);
+            }
+            //其他浏览器
+            else{
+                elem.addEventListener(e,fun,bubbly);
+            }
         }
     };
     g.$$=g.yuJS=g.commonFun=yuJS;
