@@ -765,6 +765,7 @@
             var preventDefaultFun=function () {
                 event.preventDefault();
             };
+            if(yuJS.browser==='android-uc'){parse.$box.addEventListener('touchmove',preventDefaultFun,false);}
             //根据各参数做相应移动
             //elem 移动区域; posObj 移动元素相关参数,sx X方向移动速度,mx X方向移动距离,sy SPEED_Y,my MOVE_Y
             var moveChooseEle=function (elem,posObj,sx,mx,sy,my) {
@@ -838,7 +839,7 @@
                 moveY=touchYE-touchYS;
                 if(Math.abs(moveY)/Math.abs(moveX)>2)return;
                 //禁止元素默认行为
-                parse.$box.addEventListener('touchmove',preventDefaultFun,false);
+                //parse.$box.addEventListener('touchmove',preventDefaultFun,false);
                 //移动时间
                 moveTime=endTime-startTime;
                 //移动速度
@@ -868,6 +869,9 @@
                 if(Math.abs(distanceX)<Math.abs(distanceY) || Math.abs(distanceX)<Math.abs(distanceY)){
                     //取消阻止默认行为
                     parse.$box.removeEventListener('touchmove',preventDefaultFun,false);
+                }
+                else if(yuJS.browser!=='android-uc'){
+                    parse.$box.addEventListener('touchmove',preventDefaultFun,false);
                 }
             });
             parse.$box.addEventListener('touchend',function (e) {
@@ -967,6 +971,45 @@
                 return false;
             }
         },
+        browser:(function () {
+            var ua=navigator.userAgent.toLowerCase();
+            if(ua.indexOf("android")>=0) {
+                if(ua.indexOf("ucbrowser")>=0 ) {
+                    return "android-uc";
+                }
+                return "android";
+            }
+            if(ua.indexOf("iphone")>=0) {
+                return "iphone";
+            }
+            if(ua.match(/.*mac.*os/ig)) {
+                return "mac";
+            }
+            if(ua.indexOf("chrome")>=0) {
+                return "chrome";
+            }
+            if(ua.indexOf("firefox")>=0){
+                return "firefox";
+            }
+            if(ua.indexOf("msie")>=0) {
+                if(ua.match(/.*msie.*10\.0/ig)){
+                    return "IE10";
+                }
+                return "IE";
+            }
+            if(ua.indexOf("Safari")>=0) {
+                return "safari";
+            }
+            if(ua.indexOf("Camino")>=0){
+                return "camino";
+            }
+            if(ua.indexOf("Gecko/")>=0){
+                return "gecko";
+            }
+            else {
+                return false;
+            }
+        }()),
         compatibilityEvent:function (elem,e,fun,bubbly) {
             if(!e || (elem && typeof(elem)!=='object'))return;
             elem=elem||document.body;
