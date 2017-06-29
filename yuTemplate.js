@@ -21,6 +21,7 @@
             var selectObj=function (options) {
                 this.options = options || {};
                 this.duration=400;
+                this.browser=$$.getBrowser();
                 this.init();
             };
             selectObj.prototype = {
@@ -31,6 +32,7 @@
                 _isResetSize: false,
                 _highlightIndex: -1,
                 _seletedIndex: -1,
+                _isLageScreen:$$.screenWidth()>767,
                 init: function() {
                     if (!this.options.container) return;
                     this.dataList =(this.options.dataJson)? $$.jsonParse(this.options.dataJson):[{}];
@@ -64,7 +66,7 @@
                     this.$dom2.setAttribute('inBody','true');
                     this.$dom1.setAttribute('style','position: relative;width:100%;height: '+(this.style.inputHeight||'30px')
                         +';overflow: hidden;background-color: transparent;');
-                    this.$dom2.setAttribute('style','width: 100% ;height: auto;background-color: transparent;z-index: 9999;display:none;');
+                    this.$dom2.setAttribute('style','width: 100% ;height: auto;background-color: transparent;z-index: 9999;display:none;padding:15px 0px');
                     this.$dom2.setAttribute('class','select_list_#fes4/ef5');
                     this.$dom1_1=this.$dom1_1||$.createElement('input');
                     this.$dom1_1.setAttribute('first-line','true');
@@ -73,9 +75,10 @@
                     this.$dom1_1.setAttribute('inBody','true');
                     this.$dom1_2.setAttribute('inBody','true');
                     this.$dom1_1.setAttribute('readonly',(this.allowInput)?'':'readonly');
+                    this.$dom1_1.setAttribute('disabled',(this.allowInput)?'':'disabled');
                     this.$dom1_1.setAttribute('style',
-                        'width:80%;max-width:calc(92% - 30px); height: calc(100% - 1px);position: absolute;left: 5%;background-color: transparent;'
-                            +'-ms-text-overflow: ellipsis;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;padding-right:20px;'
+                        'width:80%;max-width:calc(92% - 30px); height: calc(100% - 1px);position: absolute;left: 8%;background-color: transparent;'
+                        +'-ms-text-overflow: ellipsis;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;padding-right:20px;'
                         // +'border-bottom:1px solid #e5e5e5;'
                         +'font-size: '+(this.style.inputFontSize||'14px')+';color:'+(this.style.inputColor||'#333333')
                         +';line-height:'+(this.style.inputHeight||'30px')+';'+((this.allowInput)?'':'cursor:pointer;'));
@@ -86,8 +89,8 @@
                     this.$dom1_2_1=this.$dom1_2_1||$.createElement('div');
                     this.$dom1_2_1.setAttribute('first-line','true');
                     this.$dom1_2_1.setAttribute('style','width: 9px;height: 9px;transform: rotate(-45deg);transform-origin:0% 100%;background-color: transparent;'
-                            +'position:absolute;top:calc(50% - 6px);left:calc(50% - 6px);'
-                            +'border-left:1px;border-bottom: 1px;border-style: solid;border-color: #333333;');
+                        +'position:absolute;top:calc(50% - 6px);left:calc(50% - 6px);'
+                        +'border-left:1px;border-bottom: 1px;border-style: solid;border-color: #333333;');
 
                     this.$dom1_2_1.setAttribute('inBody','true');
                     this.$dom1_2.appendChild(this.$dom1_2_1);
@@ -120,6 +123,11 @@
                         }
                     })();
                 },
+                //给输入框加底部横线---间隔输入框跟下拉列表
+                drawInputLine:function (flag) {
+                    if(this.browser==='iphone')return;
+                    flag==true?this.$dom1_1.style.borderBottom='1px solid #454545':this.$dom1_1.style.borderBottom='none';
+                },
                 //渲染下拉列表
                 renderList: function(list) {
                     var listTpl = '',
@@ -130,28 +138,31 @@
                             $span.setAttribute('name',list[i].id||'null');
                             $span.innerHTML=decodeURI(list[i].des||'');
                             $span.setAttribute('style',
-                                'background-color: transparent; padding-left: 5%;width:auto;height:'+(this.style.listHeight||'25px')
+                                'background-color: transparent; padding-left: 8%;width:auto;height:'+(this.style.listHeight||'25px')
                                 +';line-height: '+(this.style.listHeight||'25px')+';font-size: '+(this.style.listFontSize||'14px')+';'
                                 +'text-align: left;text-overflow: ellipsis;overflow: hidden;color:'+(this.style.listColor||'#808080')+';cursor:pointer;');
                             this.$list.appendChild($span);
                         }
                         $$.show(this.$list,{
-                            opacity:{},
-                            height:''
+                            height:'',
+                            notAddPadding:true,
+                            notHeightAuto:true
                         },this.duration);
-                        this.$dom1_1.style.borderBottom='1px solid #e5e5e5';
-                        this._isListShow=!this._isListShow;
+                        this.drawInputLine(true);
+                        this._isListShow=true;
                         this.arrowRotate(135);
+                        // console.log('renderList show');
                         this.highlight();
                     } else {
                         this.$list.innerHTML=listTpl;
                         $$.hide(this.$list,{
-                            opacity:'',
                             height:''
                         },'300');
-                        this.$dom1_1.style.borderBottom='';
-                        self.arrowRotate(-45);
-                        self.$input.onblur();
+                        this.drawInputLine(false);
+                        this._isListShow=false;
+                        this.arrowRotate(-45);
+                        // console.log('renderList hidden');
+                        this.$input.onblur();
                     }
                     this.filterDataList = list;
                     this._isRended = true;
@@ -177,34 +188,37 @@
                 //input框选中//$input.onclick
                 listenFocus: function() {
                     var self = this;
+                    //input 针对手机端的点击事件
                     this.inputTouchend=function () {
                         //已经渲染过则直接展开
                         if (self._isRended && self.filterDataList.length > 0 && !self._isListShow) {
                             self.highlight(self._seletedIndex);
                             $$.show(self.$list,{
-                                opacity:{},
-                                height:''
+                                notAddPadding:true,
+                                height:'',
+                                notHeightAuto:true
                             },self.duration);
-                            self.$dom1_1.style.borderBottom='1px solid #e5e5e5';
-                            self._isListShow=!self._isListShow;
+                            self.drawInputLine(true);
+                            self._isListShow=true;
                             self.arrowRotate(135);
+                            // console.log('listenFocus show');
                             self.highlight();
                             return;
                         }
                         if(self._isListShow){
                             $$.hide(self.$list,{
-                                opacity:'',
                                 height:''
                             },'300');
                             self.arrowRotate(-45);
-                            self.$dom1_1.style.borderBottom='none';
-                            self._isListShow=!self._isListShow;
+                            // console.log('listenFocus hidden');
+                            self.drawInputLine(false);
+                            self._isListShow=false;
                             return;
                         }
                         //未渲染则渲染
                         self.search();
                     };
-                    this.$input.addEventListener('touchend',self.inputTouchend,false);
+                    if(!this._isLageScreen)this.$input.addEventListener('touchend',self.inputTouchend,false);
                 },
                 listenBlur: function() {
                     var self = this;
@@ -241,10 +255,11 @@
                             self.$input.value=selectObj.name;
                             self.$container.data.value= selectObj.id;
                             $$.hide(self.$list,{
-                                opacity:'',
                                 height:''
                             },'300');
-                            self.$dom1_1.style.borderBottom='none';
+                            self._isListShow=false;
+                            // console.log('listenSearch hidden');
+                            self.drawInputLine(false);
                             self.arrowRotate(-45);
                             self.$input.onblur();
                         } else {
@@ -254,10 +269,12 @@
                 },
                 listenTrigger: function() {
                     var self = this;
-                    this.$trigger.addEventListener('touchend',function () {
-                        self.inputTouchend();
-                        return;
-                    },false);
+                    if(!this._isLageScreen){
+                        this.$trigger.addEventListener('touchend',function () {
+                            self.inputTouchend();
+                            return;
+                        },false);
+                    }
                 },
                 listenSelect: function() {
                     var self = this;
@@ -267,11 +284,12 @@
                         var $this = e.target;
 
                         self.keywords = $this.innerHTML;
-                        yuJS.hide(self.$list,{
-                            opacity:'',
+                        $$.hide(self.$list,{
                             height:''
                         },'300');
-                        self.$dom1_1.style.borderBottom='none';
+                        // console.log('listenSelect hidden');
+                        self._isListShow=false;
+                        self.drawInputLine(false);
                         self.arrowRotate(-45);
                         self.$container.data.id= id;
                         self._highlightIndex= self._seletedIndex=yuJS.childIndex($this);
@@ -292,7 +310,6 @@
                         else{
                             if(!self._isListShow && $$.screenWidth()>767){
                                 self.inputTouchend();
-
                             }
                         }
                     };
@@ -325,7 +342,6 @@
                         }
                         if(self._isListShow){
                             self.inputTouchend();
-
                         }
                     }
                 },
@@ -333,15 +349,14 @@
                     var self = this;
                     $.body.onclick=function (e) {
                         var $this=e.target;
-                        if (!$this.getAttribute('inBody')) {
+                        if (!$this.getAttribute('inBody') && $this.getAttribute('class')!=='v_h_usercenter') {
                             var domList=$.getElementsByClassName('select_list_#fes4/ef5');
-                            for(var i in domList){
-                                if(i=='length')return;
+                            for(var i=0,l=domList.length;i<l;i++ ){
                                 if(domList[i].style.display=='none')continue;
-                                yuJS.hide(domList[i],{
-                                    opacity:'',
+                                $$.hide(domList[i],{
                                     height:''
-                                },'300');
+                                },'200');
+                                // console.log('listenBodyClick hidden');
                                 var $thisGFather=yuJS.deleteEmptyNode(domList[i].parentNode).childNodes[0];
                                 var $thisFather=yuJS.deleteEmptyNode($thisGFather).lastChild;
                                 var $target=yuJS.deleteEmptyNode($thisFather).lastChild;
@@ -354,20 +369,29 @@
                 //当PC滚动滚轮手机端滑动页面时，input失去焦点，输入框收起
                 listenMove:function () {
                     var self=this;
+                    var browser=$$.getBrowser();
                     var listener=document.addEventListener||null;
                     var moveFun=function () {
                         $$.hide(self.$list,{
-                            opacity:'',
                             height:''
-                        },'300');
-                        self.$dom1_1.style.borderBottom='none';
+                        },'200');
+                        // console.log('listenMove hidden');
+                        self.drawInputLine(false);
                         self.$input.blur();
                     }
-
-                    if(listener){
-                        //FireFox
-                        if(!document.onmousewheel)listener('DOMMouseScroll',moveFun,false);
-                        listener('touchmove',moveFun,false);
+                    if(listener && browser && !browser.match('IE')){
+                        if(self._isLageScreen){
+                            listener('DOMMouseScroll',moveFun,false);
+                        }
+                        //iphone ios9 中无法将document.addEventListener赋值给变量
+                        if($$.browser==='iphone'){
+                            document.addEventListener('touchmove',moveFun,false);
+                        }
+                        else listener('touchmove',moveFun,false);
+                    }
+                    else if(browser && browser!='IE'){
+                        document.attachEvent('DOMMouseScroll',moveFun);
+                        document.attachEvent('touchmove',moveFun);
                     }
                     //非firefox兼容并赋给全局
                     g.onmousewheel=document.onmousewheel=moveFun;
