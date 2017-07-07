@@ -306,6 +306,7 @@
             style.transform='rotate('+options.deg+'deg)';
             style.transformOrigin=options.origin||'center center';
         },
+        
         //     $$.show DEMO
         //     $$.show(elem,{
         //       opacity:'',
