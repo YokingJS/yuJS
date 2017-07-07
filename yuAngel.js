@@ -10,7 +10,6 @@
             this.root=typeof(root)==='string'?$.querySelector(`#${root}`):root;
             this._={};
             this.bridge={};
-
         }
         execute(fun){
             //执行页面处理方法，并将this._作为参数传入。所有this._中的属性将被绑定监听
