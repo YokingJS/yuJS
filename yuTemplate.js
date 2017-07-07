@@ -24,6 +24,7 @@
                 this.browser=$$.getBrowser();
                 this.init();
             };
+            
             selectObj.prototype = {
                 constructor: selectObj,
                 keywords: '',
