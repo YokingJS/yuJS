@@ -57,6 +57,7 @@
                 }
             }
         },
+        
         buryingPoint:function (url,name) {
             if(!url || !name)return;
             var elemList=$$.nodeDescendant($.body,'['+name+']');
