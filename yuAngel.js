@@ -44,6 +44,7 @@
             }
             //如果来自view
             if(viewKey){
+               // if(this._[viewKey]!=='undefined')return;
                 bind(viewKey);
                 return;
             }
@@ -55,32 +56,74 @@
             }
         }
         //this._变化通知viewModel进而通知bridge中的对应通知列表;from表示来源,true表示从来自model的变化通知，false表示来自view的添加通知列表
-        viewModel(key,from,node){
+        //node是元素节点,value是当前元素节点的y-value值，keyMatch是Key在value中的代位字符串,如果一个y-value中有多个key则keyMatch是这些key的代位字符串数组
+        viewModel(key,from,node,nodeValue,keyMatch){
+            //a（被通知体）需要被通知的元素的node节点，y-value属性，keyMatch组成的数组，不存在a，则被通知体本身是元素节点
+            let fixValue=(a)=>{
+                //a[2]如果是数组(对应元素的value绑定了超过1个变量)
+                if(a){
+                    //a[2]是一个变量的代位字符串
+                    if(typeof(a[2])==='string'){
+                        let str='\\$\\`'+key+'\\`';
+                        let reg=new RegExp(str,'g');
+                        return a[1].replace(reg,this._[key]);
+                    }
+                    else{
+                        let value=a[1];
+                        a[2][0].forEach((key,index)=>{
+                            value=value.replace(a[2][1][index],this._[key]||'');
+                        });
+                        return value;
+                    }
+                }
+
+                else{
+                    return this._[key];
+                }
+            };
+            let arr=null;
+            if(Object.prototype.toString.call(node)==='[object Array]'){
+                arr=node;
+                node=node[0];
+            }
             if(from){
                 this.bridge[key].forEach( (node) =>{
-                    switch (node.localName){
+                    if(Object.prototype.toString.call(node)==='[object Array]'){
+                        arr=node;
+                        node=node[0];
+                    }
+                    //根据当前通知对象类型执行通知。node是string则通知
+                    switch (node.localName||node[0].localName){
                         case 'input':
-                            node.value=this._[key];
+                            node.value=fixValue(arr);
                             break;
                         default:
-                            node.innerHTML=this._[key];
+                            node.innerHTML=fixValue(arr);
                             break;
                     }
 
                 });
             }
             else{
-                //通知队列已经存在
+                //通知队列已经存在,node为value属性值node==='string'，否则为元素节点
                 if(this.bridge[key]){
-                    this.bridge[key].push(node);
+                    if(nodeValue){
+                        this.bridge[key].push([node,nodeValue,keyMatch]);
+                    }
+                    else{this.bridge[key].push(node);}
                 }
                 //新建通知队列
                 else{
-                    this.bridge[key]=[node];
+                    if(nodeValue){
+                        this.bridge[key]=[node,nodeValue,keyMatch];
+                    }
+                    else{
+                        this.bridge[key]=[node];
+                    }
                     //将需要监听的键值和view中初始值传入绑定
-                    this.bindWatch(this,key);
+                    if(this._[key]===undefined)this.bindWatch(this,key);
                 }
-                //view改变更改model
+                //view改变更改model,以及初始化view中的绑定变量
                 switch (node.localName){
                     case 'input':
                         //添加监听事件，监听view的变化
@@ -103,8 +146,16 @@
                             inputChange();
                         });
                         //根据view的初始数据初始化model中的对应变量值
-                        let value=node.value;
-                        if(value)this._[key]=value;
+                        let inputValue=node.value;
+                        if(inputValue)this._[key]=inputValue;
+                        break;
+                    case 'div':
+                        //初始化div值
+                        let divInner=node.innerHTML;
+                        break;
+                    default:
+                        break;
+
                 }
             }
         }
@@ -112,7 +163,7 @@
             //node 片段
             let node,fragment=$.createDocumentFragment();
             //将reg写在此处作为参数传入实际使用的方法中。如果放在使用的方法中定义，会每次都重新创建分配该定义空间。
-            let  reg=/\$\`(.*)\`/;
+            let  reg=/\$\`(.*?)\`/g;
             //遍历root节点，处理后放入fragment，最后放回root
             while(node=root.firstChild){
                 if(node.firstChild ){
@@ -135,13 +186,47 @@
                 case 1:
                     let model=node.getAttribute('y-model');
                     if(model){
+                        //添加node到model的通知队列
                         this.viewModel(model,false,node);
                         break;
                     }
                     let value=node.getAttribute('y-value');
-                    if(value){
+                    //匹配出满足$``的片段
+                    let matchArr=value.match(reg);
+                    //matchArr去重
+                    matchArr=((oldArr)=>{
+                        let arr=[],arrobj={};
+                        oldArr.forEach(function (key) {
+                            if(!arrobj[key]){
+                                arrobj[key]=true;
+                                arr.push(key);
+                            }
+                        });
+                        return arr;
 
+                    })(matchArr);
+                    let keyArr=[];
+                    if(value && matchArr){
+                        matchArr.forEach((match)=>{
+                            let key=match.substring(2,match.length-1);
+                            if(matchArr.length===1){
+                                this.viewModel(key,false,node,value,match);
+                                this.viewModel(key,true);
+                            }
+                            else{
+                                //this.viewModel(key,false,node,value,matchArr);
+                                keyArr.push(key);
+                            }
+
+                        });
+                        if(keyArr) {
+                            keyArr.forEach((key) => {
+                                this.viewModel(key, false, node, value, [keyArr, matchArr]);
+                            })
+                            this.viewModel(keyArr[0],true);
+                        }
                     }
+                    break;
                 default:
                     break;
             }
