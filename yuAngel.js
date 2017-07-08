@@ -1,5 +1,5 @@
 /**
- * Created by vivo on 2017/7/6.
+ * Created by vivo_yezhen on 2017/7/6.
  */
 ( (g,$,undefined) =>{
     class yuAngel{
@@ -33,7 +33,6 @@
                     get: () =>{
                         return keyValue;
                     },
-                    
                     set:(newValue)=>{
                         //如果值没变化则不执行
                         if(keyValue===newValue)return;
@@ -71,16 +70,20 @@
                 });
             }
             else{
+                //通知队列已经存在
                 if(this.bridge[key]){
                     this.bridge[key].push(node);
                 }
+                //新建通知队列
                 else{
                     this.bridge[key]=[node];
+                    //将需要监听的键值和view中初始值传入绑定
                     this.bindWatch(this,key);
                 }
                 //view改变更改model
                 switch (node.localName){
                     case 'input':
+                        //添加监听事件，监听view的变化
                         let CL=false;
                         let inputChange=()=>{
                             if(CL)return;
@@ -99,39 +102,48 @@
                             CL=false;
                             inputChange();
                         });
+                        //根据view的初始数据初始化model中的对应变量值
+                        let value=node.value;
+                        if(value)this._[key]=value;
                 }
             }
         }
         tidyRoot(root){
             //node 片段
             let node,fragment=$.createDocumentFragment();
+            //将reg写在此处作为参数传入实际使用的方法中。如果放在使用的方法中定义，会每次都重新创建分配该定义空间。
+            let  reg=/\$\`(.*)\`/;
             //遍历root节点，处理后放入fragment，最后放回root
             while(node=root.firstChild){
                 if(node.firstChild ){
                     node.appendChild(this.tidyRoot(node));
                     //过滤节点中的绑定并添加到对应通知中
-                    this.leachNode(node);
+                    this.leachNode(node,reg);
                     fragment.appendChild(node);
                 }
                 else {
                     //过滤节点中的绑定并添加到对应通知中
-                    this.leachNode(node);
+                    this.leachNode(node,reg);
                     fragment.appendChild(node);
                 }
-                // else if(node.nodeName != "#text" && node.nodeName != "#comment")  {
-                //     root.removeChild(node);
-                // }
             }
             return fragment;
         }
         //过滤节点中的绑定并添加到this.bridge对应的通知列表
-        leachNode(node){
+        leachNode(node,reg){
             switch (node.nodeType){
                 case 1:
                     let model=node.getAttribute('y-model');
                     if(model){
                         this.viewModel(model,false,node);
+                        break;
                     }
+                    let value=node.getAttribute('y-value');
+                    if(value){
+
+                    }
+                default:
+                    break;
             }
         }
     }
