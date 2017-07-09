@@ -10,4 +10,3 @@ yuJS/yuTemplate/yuCSS/yuAngel介绍
 
 框架（ES6语法）：yuAngel是一个实现了双向绑定的框架，目前处于初期维护阶段，后期定位：一个易于维护，可读性高的ES6框架。
 
-
