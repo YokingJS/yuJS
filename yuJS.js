@@ -1,4 +1,4 @@
-(function (g,$,undefined) {
+(function (g,d,undefined) {
     //yuJS是一个全局方法库//实现了对当前项目的零耦合
     //jsonParse 一个全局parse方法
 
@@ -37,7 +37,7 @@
     //getBrowser判断当前浏览器
     //compatibilityEvent事件的浏览器兼容
     var yuJS={
-        jsonParse : g.JSON && JSON.parse ? JSON.parse : eval,
+        jsonParse : g.JSON && JSON.parse ? JSON.parse :evalFun,
         /////////////////////////////////////////////////////////////页面样式,页面运算相关
         domReady:function(funList){
             var isReady=false;
@@ -57,13 +57,13 @@
                 if(isReady) {return;}
                 isReady=true;
                 onDOMReady.call(g);
-                if($.removeEventListener)
+                if(d.removeEventListener)
                 {
-                    $.removeEventListener("DOMContentLoaded", bindReady, false);
+                    d.removeEventListener("DOMContentLoaded", bindReady, false);
                 }
-                else if($.attachEvent)
+                else if(d.attachEvent)
                 {
-                    $.detachEvent("onreadystatechange", bindReady);
+                    d.detachEvent("onreadystatechange", bindReady);
                     if(g == g.top){
                         clearInterval(timer);//事件发生后清除定时器
                         timer = null;
@@ -71,14 +71,14 @@
                 }
             };
 
-            if($.addEventListener){
-                $.addEventListener("DOMContentLoaded", bindReady, false);
+            if(d.addEventListener){
+                d.addEventListener("DOMContentLoaded", bindReady, false);
             }
-            else if($.attachEvent)//非最顶级父窗口
+            else if(d.attachEvent)//非最顶级父窗口
 
             {
-                $.attachEvent("onreadystatechange", function(){
-                    if((/loaded|complete/).test($.readyState))
+                d.attachEvent("onreadystatechange", function(){
+                    if((/loaded|complete/).test(d.readyState))
                     {
                         bindReady();
                     }
@@ -101,14 +101,14 @@
             }
         },
         screenWidth:function (dom) {
-            dom=dom||$;
+            dom=dom||d;
             return dom.body.offsetWidth;
         },
         setEmFun:function (options) {
             var options = options?options:{};
             if(!options.setEm)return;
             var param=options.setEm;
-            var dom=param.dom?param.dom:$;
+            var dom=param.dom?param.dom:d;
             if(!dom.body)return;
             var UIWidth=param.UIWidth?param.UIWidth:1080;
             var unitMatrix=param.unitMatrix?param.unitMatrix:100;
@@ -117,7 +117,8 @@
         },
         ////////////////////////////////////////////////////////////////////元素节点的运算
         deleteEmptyNode:function (elem){
-            var newElem=elem;
+            if(!elem)return;
+            var newElem=elem.cloneNode(true);
             var elem_child = newElem.childNodes;
             for(var i=0; i<elem_child.length;i++){
                 if(elem_child[i].nodeName == "#text" && !/\s/.test(elem_child.nodeValue)|| elem_child[i].nodeName == "#comment") {
@@ -129,7 +130,7 @@
         },
         appendChilds:function (father,sonList) {
             var list=sonList||[];
-            for(var i in list){
+            for(var i=0,l=list.length;i<l;i++ ){
                 father.appendChild(list[i]);
             }
         },
@@ -226,7 +227,7 @@
             if(!(elem instanceof HTMLElement))return;
             var index=null;
             var  childList=this.deleteEmptyNode(elem.parentNode).childNodes;
-            for(var i in childList){
+            for(var i=0,l=childList.length;i<l;i++ ){
                 if(childList[i]===elem)index=i;
             }
             return index;
@@ -306,7 +307,6 @@
             style.transform='rotate('+options.deg+'deg)';
             style.transformOrigin=options.origin||'center center';
         },
-        
         //     $$.show DEMO
         //     $$.show(elem,{
         //       opacity:'',
@@ -699,9 +699,11 @@
             opt.success = opt.success || function () {};
             var xmlHttp = null;
             if (XMLHttpRequest) {
+                //主流浏览器
                 xmlHttp = new XMLHttpRequest();
             }
             else {
+                //非主流浏览器
                 xmlHttp = new ActiveXObject('Microsoft.XMLHTTP');
             }
             var params = [];
@@ -721,6 +723,9 @@
             xmlHttp.onreadystatechange = function () {
                 if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
                     opt.success(xmlHttp.responseText);
+                }
+                else if(xmlHttp.readyState == 4){
+                    opt.error && opt.error(xmlHttp.readyState,xmlHttp.status);
                 }
             };
         },
@@ -905,9 +910,15 @@
         setCookie:function (name, value,days) {
             var Days = days||365;
             var minutes = 60;
+            var hour=24;
+            var seconds=60;
             var exp = new Date();
-            exp.setTime(exp.getTime() + Days * 24 * 60 * 60 * 1000);
-            document.cookie = name + "=" + encodeURI(value) + ";expires=" + exp.toGMTString() + "; path=/";
+            var timeStr='';
+            if(Days!=='browserClose'){
+                exp.setTime(exp.getTime() + Days * hour * minutes * seconds * 1000);
+                timeStr=";expires=" + exp.toGMTString();
+            }
+            document.cookie = name + "=" + encodeURI(value) + timeStr + "; path=/";
         },
         getCookie:function (name) {
             //"(^| )"+ name + "=([^;]*)(;|$)")==>开始或者任意开头+name+非‘;’+‘;’或结束
@@ -936,6 +947,7 @@
             }
             return guid;
         },
+        //以$$.browser为准,此处后期将废除
         getBrowser:function () {
             var ua=navigator.userAgent.toLowerCase();
             if(ua.indexOf("android")>=0) {
@@ -983,9 +995,6 @@
             if(ua.indexOf("iphone")>=0) {
                 return "iphone";
             }
-            if(ua.match(/.*mac.*os/ig)) {
-                return "mac";
-            }
             if(ua.indexOf("chrome")>=0) {
                 return "chrome";
             }
@@ -998,6 +1007,9 @@
                 }
                 return "IE";
             }
+            if(ua.indexOf("trident")>=0) {
+                return "IE11";
+            }
             if(ua.indexOf("Safari")>=0) {
                 return "safari";
             }
@@ -1006,6 +1018,9 @@
             }
             if(ua.indexOf("Gecko/")>=0){
                 return "gecko";
+            }
+            if(ua.match(/.*mac.*os/ig)) {
+                return "mac";
             }
             else {
                 return false;
