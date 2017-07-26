@@ -121,7 +121,7 @@
             var newElem=elem.cloneNode(true);
             var elem_child = newElem.childNodes;
             for(var i=0; i<elem_child.length;i++){
-                if(elem_child[i].nodeName == "#text" && !/\s/.test(elem_child.nodeValue)|| elem_child[i].nodeName == "#comment") {
+                if(elem_child[i].nodeName == "#text" && /\s/.test(elem_child[i].nodeValue)|| elem_child[i].nodeName == "#comment") {
                     newElem.removeChild(elem_child[i]);
                     i--;
                 }
