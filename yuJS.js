@@ -117,11 +117,10 @@
         },
         ////////////////////////////////////////////////////////////////////元素节点的运算
         deleteEmptyNode:function (elem){
-            if(!elem)return;
-            var newElem=elem.cloneNode(true);
+            var newElem=elem;
             var elem_child = newElem.childNodes;
             for(var i=0; i<elem_child.length;i++){
-                if(elem_child[i].nodeName == "#text" && /\s/.test(elem_child[i].nodeValue)|| elem_child[i].nodeName == "#comment") {
+                if(elem_child[i].nodeName === "#text" && /\s/.test(elem_child[i].nodeValue)|| elem_child[i].nodeName == "#comment") {
                     newElem.removeChild(elem_child[i]);
                     i--;
                 }
@@ -893,6 +892,216 @@
                     //'x'表示根据X方向来计算滑动
                     case 'x':directionX();break;
                 }
+            },false);
+        },
+        //new scroll
+        scrollN:function (parse) {
+            if(!parse.$box)return;
+            //定义动画频率,间隔时间，加速度,放大初始速度（相同位移下，初速度变大，加速度就可以调大，避免加速度小数位过多）
+            var frequency=50,
+                step=6,timer=10,
+                accelerate=0.05,
+                magnifySpeed=5;
+
+
+            //touchXS/YS:touch的开始位置;lastX/Y:上一瞬间位置;touchXE/YE:结束位置
+            var touchXS,touchYS,lastX,lastY,touchXE,touchYE,moveX,moveY,startTime,endTime,moveTime,speedX,$pos,
+                //lastMargin:上一瞬间元素margin位置;$movedElem:通过该元素位置变化控制滑动;unit:尺寸单位
+                lastMargin,$movedElem,elemStyle,unit;
+            //init $movedElem & unit
+            var setMovedElem=function (elem,posObj) {
+                switch (posObj.type){
+                    //01表示移动参考点是$box的第一个元素
+                    case'01':
+                        //参考点元素
+                        $movedElem=$$.deleteEmptyNode(elem).firstChild;
+                        elemStyle=$movedElem && $movedElem.style;
+                        //获取单位
+                        unit=posObj.maxX.match(/[a-z]+/)[0];
+                        //数字化
+                        posObj.maxX=parseFloat(posObj.maxX).toFixed(2)*(unit.match('em')?$$.actualPx:1);
+                        posObj.minX=parseFloat(posObj.minX).toFixed(2)*(unit.match('em')?$$.actualPx:1);
+                        //初始化marginLeft
+                        lastMargin=parseFloat($$.getDomCss($movedElem,'marginLeft'));
+                        break;
+                    default:break;
+                }
+            };
+
+            //将阻止默认行为的方法放在函数中调用。以便接触阻止。
+            var preventDefaultFun=function () {
+                event.preventDefault();
+            };
+            if(yuJS.browser==='android-uc'){parse.$box.addEventListener('touchmove',preventDefaultFun,false);}
+
+
+            //根据起点和终点返回方向 1：top，2：right，3：bottom，4：left,0：未滑动
+            var scrollDirection=function(startX, startY, endX, endY,dx,dy) {
+                var result = 0;
+
+                //如果滑动距离太短
+                if(Math.abs(dx) < 50 && Math.abs(dy) <50) {
+                    return result;
+                }
+
+                var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                if(angle >= -45 && angle < 45) {
+                    result = 2;//right
+                }else if (angle >= 45 && angle < 135) {
+                    result = 1;//top
+                }else if (angle >= -135 && angle < -45) {
+                    result = 3;//bottom
+                }
+                else if ((angle >= 135 && angle <= 180) || (angle >= -180 && angle < -135)) {
+                    result = 4;//left
+                }
+
+                return result;
+            }
+            //根据各参数做相应移动
+            //elem 移动区域; posObj 移动元素相关参数,sx X方向移动速度,mx X方向移动距离,sy SPEED_Y,my MOVE_Y
+            var moveChooseEle=function (posObj,sx) {
+                //计算移动
+                var moveElem=function (obj,speed) {
+                    if(speed){
+                        //速度阈值
+                        var minSpeed=0.4,
+                            maxSpeed=1;
+                        var x_axis=0;
+                        var computeGap=function (v,a,t,T) {
+                            //初始速度v,加速度a，间隔相同时间t，第T秒与第T+t秒的位移差
+                            return parseFloat((v*t+1/2*a*Math.pow(t,2)+a*t*T).toFixed(4)) ;
+                        };
+                        var process=function (sx,x_axis) {
+                            var gap=computeGap(sx,accelerate,step,x_axis);
+                            var newMargin=lastMargin+gap;
+                            elemStyle.marginLeft=newMargin+'px';
+                            lastMargin=newMargin;
+                            if(gap*speed>=0) {
+                                x_axis=x_axis+step;
+                                setTimeout(function () {
+                                    process(sx, x_axis);
+                                },timer);
+                            }
+                            else{
+                                $$.addTransition($movedElem,'margin','200ms','ease-in-out');
+                                if(lastMargin<obj.minX){
+                                    elemStyle.marginLeft=obj.minX+'px';
+                                    lastMargin=obj.minX;
+                                }
+                                if(lastMargin>obj.maxX){
+                                    elemStyle.marginLeft=obj.maxX+'px';
+                                    lastMargin=obj.maxX;
+                                }
+                            }
+                        };
+                        if(speed*accelerate>0){
+                            accelerate=-accelerate;
+                        }
+                        process(speed,x_axis);
+                    }
+                };
+                //计算移动
+                moveElem(posObj,sx);
+            };
+            //根据X方向计算整个滑动，directionX是计算方法的入口函数
+            var directionX=function(){
+                //x方向计算依赖X方向起始和结束位置，没有则退出
+                if(!touchXS || !touchXE ||touchXS===touchXE)return;vivoportalWebUrl
+                //移动时间
+                moveTime=endTime-startTime;
+                //移动速度
+                speedX=moveX/moveTime*magnifySpeed;
+                //根据各参数做相应移动
+                moveChooseEle(parse.posType,speedX);
+            };
+            //跟踪手指路径
+            var instantMoving=function (lx,nx) {
+                var smashMove=nx-lx;
+                var newMargin=lastMargin+smashMove;
+                elemStyle.marginLeft=newMargin+'px';
+                lastMargin=newMargin;
+            };
+            //init $movedElem
+            setMovedElem(parse.$box,parse.posType);
+            parse.$box.addEventListener('touchstart',function (e) {
+                //没有触点跳出
+                var targetTouches=e.targetTouches;
+                if(targetTouches.length<=0)return;
+                //touch起始时间
+                startTime=new Date().getTime();
+                var targetTouch=targetTouches[0];
+                //touchXS:X方向touch的开始位置;touchY：Y方向...
+                touchXS=targetTouch.clientX;
+                touchYS=targetTouch.clientY;
+                //将初始位置赋给最后位置
+                lastX=touchXS;
+                lastY=touchYS;
+                //移除CSS3动画属性
+                $$.addTransition(elemStyle,false);
+
+            },false);
+            parse.$box.addEventListener('touchmove',function(e){
+                //获取滑动屏幕时的X,Y
+                var movingX = e.targetTouches[0].clientX,
+                    movingY = e.targetTouches[0].clientY,
+                    //获取滑动距离
+                    distanceX = movingX-touchXS,
+                    distanceY = movingY-touchYS;
+
+                var direction=scrollDirection(lastX,lastY,movingX,movingY,distanceX,distanceY);
+                //判断滑动方向
+                switch (direction){
+                    case 0:
+                        break;
+                    case 1:
+                    case 3:
+                        //取消阻止默认行为
+                        parse.$box.removeEventListener('touchmove',preventDefaultFun,false);
+                        break;
+                    case 2:
+                    case 4:
+                        if(yuJS.browser!=='android-uc'){
+                            parse.$box.addEventListener('touchmove',preventDefaultFun,false);
+                        }
+                        instantMoving(lastX,movingX);
+                        break;
+                    default:
+                        break;
+                }
+                lastX=movingX;
+                lastY=movingY;
+            });
+            parse.$box.addEventListener('touchend',function (e) {
+                var changedTouche=e.changedTouches;
+                if(changedTouche.length<=0)return;
+                //获取touch结束时间
+                endTime=new Date().getTime();
+                var targetTouch=changedTouche[0];
+                //touchXE:X方向touch的结束位置;touchYE：Y方向...
+                touchXE=targetTouch.clientX;
+                touchYE=targetTouch.clientY;
+                moveX=touchXE-touchXS;
+                moveY=touchYE-touchYS;
+                var direction=scrollDirection(touchXS,touchYS,touchXE,touchYE,moveX,moveY);
+                //判断滑动方向
+                switch (direction){
+                    case 0:
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        directionX();
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        directionX();
+                        break;
+                    default:
+                        break;
+                }
+
             },false);
         },
         pause:function (numberMillis) {
