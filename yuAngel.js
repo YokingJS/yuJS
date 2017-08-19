@@ -5,6 +5,7 @@
     class yuAngel{
         constructor(root){
             this.init(root);
+            
         }
         init(root){
             //根节点
@@ -13,7 +14,6 @@
             this._={};
             //通知列表的集合，对象的每个成员都是一个通知列表，model变化则找出对应的通知列表，通知列表中所有节点更新view
             this.bridge={};
-
         }
         execute(fun){
             //执行页面处理方法，并将this._作为参数传入。所有this._中的属性将被绑定监听
@@ -55,8 +55,9 @@
                 });
             }
         }
-        //this._变化通知viewModel进而通知bridge中的对应通知列表;from表示来源,true表示从来自model的变化通知，false表示来自view的添加通知列表
-        //node是元素节点,value是当前元素节点的y-value值，keyMatch是Key在value中的代位字符串,如果一个y-value中有多个key则keyMatch是这些key的代位字符串数组
+        //this._变化通知viewModel进而通知bridge中的对应通知列表;
+        // @param boole from表示来源,true表示从来自model的变化通知，false表示来自view的添加通知列表
+        // @param obj   node是元素节点,value是当前元素节点的y-value值，keyMatch是Key在value中的代位字符串,如果一个y-value中有多个key则keyMatch是这些key的代位字符串数组
         viewModel(key,from,node,nodeValue,keyMatch){
             //a（被通知体）需要被通知的元素的node节点，y-value属性，keyMatch组成的数组，不存在a，则被通知体本身是元素节点
             let fixValue=(a)=>{
@@ -191,6 +192,7 @@
                         break;
                     }
                     let value=node.getAttribute('y-value');
+                    if(!value)break;
                     //匹配出满足$``的片段
                     let matchArr=value.match(reg);
                     //matchArr去重
@@ -203,7 +205,6 @@
                             }
                         });
                         return arr;
-
                     })(matchArr);
                     let keyArr=[];
                     if(value && matchArr){
@@ -219,7 +220,7 @@
                             }
 
                         });
-                        if(keyArr) {
+                        if(keyArr && keyArr.length>0) {
                             keyArr.forEach((key) => {
                                 this.viewModel(key, false, node, value, [keyArr, matchArr]);
                             })
