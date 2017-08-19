@@ -1,17 +1,8 @@
-/*
- * Lazy Load - jQuery plugin for lazy loading images
- *
- * Copyright (c) 2007-2013 Mika Tuupola
- *
- * Licensed under the MIT license:
- *   http://www.opensource.org/licenses/mit-license.php
- *
- * Project home:
- *   http://www.appelsiini.net/projects/lazyload
- *
- * Version:  1.9.3
- *
+/**
+ * Created by vivo on 2017/7/24.
  */
+
+//在JQ的lazyload基础上修改。最终将脱离JQ作为单独原生模块执行
 
 (function($, window, document, undefined) {
     var $window = $(window);
@@ -43,12 +34,12 @@
                 }
                 if ($.abovethetop(this, settings) ||
                     $.leftofbegin(this, settings)) {
-                        /* Nothing. */
+                    /* Nothing. */
                 } else if (!$.belowthefold(this, settings) &&
                     !$.rightoffold(this, settings)) {
-                        $this.trigger("appear");
-                        /* if we found an image we'll load, reset the counter */
-                        counter = 0;
+                    $this.trigger("appear");
+                    /* if we found an image we'll load, reset the counter */
+                    counter = 0;
                 } else {
                     if (++counter > settings.failure_limit) {
                         return false;
@@ -74,7 +65,7 @@
 
         /* Cache container as jQuery as object. */
         $container = (settings.container === undefined ||
-                      settings.container === window) ? $window : $(settings.container);
+        settings.container === window) ? $window : $(settings.container);
 
         /* Fire one scroll event per scroll. Not one scroll event per image. */
         if (0 === settings.event.indexOf("scroll")) {
@@ -111,9 +102,11 @@
                             if ($self.is("img")) {
                                 $self.attr("src", original);
                             } else {
-                                $self.css('background', 'url("' + original + '")'+' '+((isLG?$self.attr('lazy-position'):($self.attr('lazy-position-mob')||$self.attr('lazy-position'))||'')));
+                                var lazy_position=$self.attr('lazy-position');
+                                var lazy_position_mob=$self.attr('lazy-position-mob');
                                 var lazy_size= $self.attr('lazy-size');
                                 var lazy_size_mob=$self.attr('lazy-size-mob');
+                                $self.css(((lazy_position||lazy_position_mob)?'background':'background-image'), 'url("' + original + '")'+' '+((isLG?lazy_position:(lazy_position_mob||lazy_position))||''));
                                 if(lazy_size_mob && !isLG)$self.css('background-size', lazy_size_mob);
                                 else if(lazy_size )$self.css('background-size', lazy_size);
                             }
@@ -224,9 +217,9 @@
     };
 
     $.inviewport = function(element, settings) {
-         return !$.rightoffold(element, settings) && !$.leftofbegin(element, settings) &&
-                !$.belowthefold(element, settings) && !$.abovethetop(element, settings);
-     };
+        return !$.rightoffold(element, settings) && !$.leftofbegin(element, settings) &&
+            !$.belowthefold(element, settings) && !$.abovethetop(element, settings);
+    };
 
     /* Custom selectors for your convenience.   */
     /* Use as $("img:below-the-fold").something() or */
@@ -245,3 +238,4 @@
     });
 
 })(jQuery, window, document);
+
